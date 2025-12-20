@@ -1,0 +1,13 @@
+{
+	"name": "scaling-octo-waffle-auth-rnd",
+	"version": "1.0.0",
+	"description": "Authentication R&D project - auth from scratch",
+	"private": true,
+	"scripts": {
+		"dev:backend": "pnpm --filter backend dev"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.11.1"
+}
