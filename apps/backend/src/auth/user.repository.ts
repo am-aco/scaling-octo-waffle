@@ -1,4 +1,5 @@
 import { pool } from "../infrastructure/database.js";
+import type { PoolClient } from "pg";
 
 export interface User {
     id: string;
@@ -56,5 +57,15 @@ export class UserRepository {
         );
 
         return result.rows[0]!;
+    }
+
+    /*
+     * Update user's last login timestamp
+     * Supports transactions via optional client parameter
+     */
+    async updateLastLogin(userId: string, client?: PoolClient): Promise<void> {
+        const query = "UPDATE users SET last_login = NOW() WHERE id = $1";
+        const executor = client ?? pool;
+        await executor.query(query, [userId]);
     }
 }
