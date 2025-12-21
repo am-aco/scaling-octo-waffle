@@ -18,6 +18,18 @@ export interface CreateUserData {
     password_hash: string;
 }
 
+export interface CreateUserWithRoleData {
+    email: string;
+    password_hash: string;
+    role_id: string;
+}
+
+export interface UpdateUserData {
+    email?: string;
+    is_active?: boolean;
+    role_id?: string;
+}
+
 
 export class UserRepository {
     /*
@@ -114,5 +126,80 @@ export class UserRepository {
         );
 
         return result.rows;
+    }
+
+    /*
+     * Create a new user with a specific role
+     * Used by admins to create users with custom roles
+     * Returns the created user with generated ID and timestamps
+     */
+    async createWithRole(userData: CreateUserWithRoleData): Promise<User> {
+        const result = await pool.query<User>(
+            `INSERT INTO users (email, password_hash, role_id)
+                VALUES ($1, $2, $3)
+            RETURNING *`,
+            [userData.email.toLowerCase(), userData.password_hash, userData.role_id]
+        );
+
+        return result.rows[0]!;
+    }
+
+    /*
+     * Update user fields
+     * Only updates provided fields (partial update)
+     * Returns the updated user or null if user doesn't exist
+     */
+    async update(userId: string, updates: UpdateUserData): Promise<User | null> {
+        const fields: string[] = [];
+        const values: unknown[] = [];
+        let paramCount = 1;
+
+        if (updates.email !== undefined) {
+            fields.push(`email = $${paramCount}`);
+            values.push(updates.email.toLowerCase());
+            paramCount++;
+        }
+
+        if (updates.is_active !== undefined) {
+            fields.push(`is_active = $${paramCount}`);
+            values.push(updates.is_active);
+            paramCount++;
+        }
+
+        if (updates.role_id !== undefined) {
+            fields.push(`role_id = $${paramCount}`);
+            values.push(updates.role_id);
+            paramCount++;
+        }
+
+        if (fields.length === 0) {
+            return await this.findById(userId);
+        }
+
+        fields.push(`updated_at = NOW()`);
+        values.push(userId);
+
+        const result = await pool.query<User>(
+            `UPDATE users
+             SET ${fields.join(", ")}
+             WHERE id = $${paramCount}
+             RETURNING *`,
+            values
+        );
+
+        return result.rows[0] ?? null;
+    }
+
+    /*
+     * Delete a user by ID
+     * Returns true if user was deleted, false if user didn't exist
+     */
+    async deleteById(userId: string): Promise<boolean> {
+        const result = await pool.query(
+            "DELETE FROM users WHERE id = $1",
+            [userId]
+        );
+
+        return result.rowCount !== null && result.rowCount > 0;
     }
 }

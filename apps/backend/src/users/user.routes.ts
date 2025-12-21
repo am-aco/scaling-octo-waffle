@@ -10,6 +10,10 @@ export function createUserRouter(): Router {
     const userRepository = new UserRepository();
     const userController = new UserController(userRepository);
 
+    router.post("/", requirePermission("users:create"), userController.createUser);
+
+    router.get("/", requirePermission("users:read"), userController.getAllUsers);
+
     router.get(
         "/:userId",
         requireOwnershipOrPermission({
@@ -19,7 +23,20 @@ export function createUserRouter(): Router {
         userController.getUserById
     );
 
-    router.get("/", requirePermission("users:read"), userController.getAllUsers);
+    router.put(
+        "/:userId",
+        requireOwnershipOrPermission({
+            resourceOwnerIdParam: "userId",
+            bypassPermission: "users:update",
+        }),
+        userController.updateUser
+    );
+
+    router.delete(
+        "/:userId",
+        requirePermission("users:delete"),
+        userController.deleteUser
+    );
 
     return router;
 }
