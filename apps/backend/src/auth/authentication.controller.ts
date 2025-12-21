@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
-import { AuthService } from "./auth.service.js";
+import { AuthenticationService } from "./authentication.service.js";
 import { ValidationError, ConflictError } from "./auth.errors.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import { COOKIE_OPTIONS } from "./auth.constants.js";
 
-export class AuthController {
-    constructor(private authService: AuthService) { }
+export class AuthenticationController {
+    constructor(private authenticationService: AuthenticationService) { }
 
     /*
      * Handle POST /auth/register
@@ -23,7 +23,7 @@ export class AuthController {
                 return;
             }
 
-            const result = await this.authService.register({ email, password });
+            const result = await this.authenticationService.register({ email, password });
 
             res.status(HTTP_STATUS.CREATED).json({
                 message: "User registered successfully",
@@ -61,7 +61,7 @@ export class AuthController {
                 return;
             }
 
-            const result = await this.authService.login({ email, password });
+            const result = await this.authenticationService.login({ email, password });
 
             res.cookie("sessionId", result.session.id, COOKIE_OPTIONS);
 
@@ -90,7 +90,7 @@ export class AuthController {
             const sessionId = req.cookies.sessionId;
 
             if (sessionId) {
-                await this.authService.logout(sessionId);
+                await this.authenticationService.logout(sessionId);
             }
 
             res.clearCookie("sessionId");
@@ -105,6 +105,10 @@ export class AuthController {
         }
     };
 
+    /** 
+     * Handle GET /auth/profile
+     * Returns the authenticated user's profile
+     */
     getProfile = (req: Request, res: Response): void => {
         res.status(HTTP_STATUS.OK).json({
             user: req.user,

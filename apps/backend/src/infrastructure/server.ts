@@ -1,8 +1,9 @@
 import express, { type Express } from "express";
 import cookieParser from "cookie-parser";
-import { createAuthRouter } from "../auth/auth.routes.js";
-import { createAuthMiddleware } from "../auth/auth.middleware.js";
+import { createAuthenticationRouter } from "../auth/authentication.routes.js";
+import { createAuthMiddleware } from "../auth/authentication.middleware.js";
 import { SessionRepository } from "../auth/session.repository.js";
+import { createUserRouter } from "../users/user.routes.js";
 import { HTTP_STATUS } from "./http.js";
 
 /* Creates and configures the Express application */
@@ -22,8 +23,11 @@ export function createServer(): Express {
         res.status(HTTP_STATUS.OK).json({ status: "ok" });
     });
 
-    /* Mount auth routes at /auth */
-    app.use("/auth", createAuthRouter({ sessionRepository }));
+    /* Mount authentication routes at /auth */
+    app.use("/auth", createAuthenticationRouter({ sessionRepository }));
+
+    /* Mount user management routes at /users */
+    app.use("/users", createUserRouter());
 
     return app;
 }

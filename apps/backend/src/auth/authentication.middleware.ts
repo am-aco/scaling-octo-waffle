@@ -28,6 +28,7 @@ export function createAuthMiddleware(sessionRepository: SessionRepository) {
             req.user = {
                 id: session.user.id,
                 email: session.user.email,
+                permissions: session.user.permissions,
             };
 
             next();

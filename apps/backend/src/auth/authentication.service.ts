@@ -30,7 +30,7 @@ export interface LoginResult {
     };
 }
 
-export class AuthService {
+export class AuthenticationService {
     constructor(
         private userRepository: UserRepository,
         private sessionRepository: SessionRepository

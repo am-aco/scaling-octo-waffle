@@ -11,6 +11,7 @@ export interface Session {
 export interface SessionUser {
     id: string;
     email: string;
+    permissions: string[];
 }
 
 export interface SessionWithUser extends Session {
@@ -24,6 +25,7 @@ interface SessionWithUserRow {
     expires_at: Date;
     user_id_fk: string;
     user_email: string;
+    user_role_id: string;
 }
 
 export class SessionRepository {
@@ -48,14 +50,17 @@ export class SessionRepository {
         sessionId: string,
         client?: PoolClient
     ): Promise<SessionWithUser | null> {
-        const query = `
+        const executor = client ?? pool;
+
+        const sessionQuery = `
             SELECT
                 sessions.id,
                 sessions.user_id,
                 sessions.created_at,
                 sessions.expires_at,
                 users.id AS user_id_fk,
-                users.email AS user_email
+                users.email AS user_email,
+                users.role_id AS user_role_id
             FROM sessions
             INNER JOIN users ON sessions.user_id = users.id
             WHERE sessions.id = $1
@@ -63,13 +68,25 @@ export class SessionRepository {
                 AND users.is_active = true
         `;
 
-        const executor = client ?? pool;
-        const result = await executor.query<SessionWithUserRow>(query, [sessionId]);
-        const row = result.rows[0];
+        const sessionResult = await executor.query<SessionWithUserRow>(sessionQuery, [sessionId]);
+        const row = sessionResult.rows[0];
 
         if (!row) {
             return null;
         }
+
+        const permissionsQuery = `
+            SELECT permissions.name
+            FROM permissions
+            INNER JOIN role_permissions ON permissions.id = role_permissions.permission_id
+            WHERE role_permissions.role_id = $1
+            ORDER BY permissions.name
+        `;
+
+        const permissionsResult = await executor.query<{ name: string }>(
+            permissionsQuery,
+            [row.user_role_id]
+        );
 
         return {
             id: row.id,
@@ -79,6 +96,7 @@ export class SessionRepository {
             user: {
                 id: row.user_id_fk,
                 email: row.user_email,
+                permissions: permissionsResult.rows.map(p => p.name),
             },
         };
     }
