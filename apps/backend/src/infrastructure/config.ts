@@ -14,72 +14,44 @@ interface Config {
     };
 }
 
+/* Helper to get required environment variable or throw */
+function requireEnv(name: string): string {
+    const value = process.env[name];
+    if (!value) {
+        throw new Error(`Missing required environment variable: ${name}`);
+    }
+    return value;
+}
+
+/* Helper to get required environment variable as integer */
+function requireEnvInt(name: string): number {
+    const value = requireEnv(name);
+    const parsed = parseInt(value, 10);
+    if (isNaN(parsed)) {
+        throw new Error(`Invalid ${name}: "${value}". Must be a number`);
+    }
+    return parsed;
+}
+
 function loadConfig(): Config {
-    const nodeEnv = process.env["NODE_ENV"];
-    const port = process.env["PORT"];
-    const dbHost = process.env["DB_HOST"];
-    const dbPort = process.env["DB_PORT"];
-    const dbName = process.env["DB_NAME"];
-    const dbUser = process.env["DB_USER"];
-    const dbPassword = process.env["DB_PASSWORD"];
-
-    /* Validate required variables exist */
-    if (!nodeEnv) {
-        throw new Error("Missing required environment variable: NODE_ENV");
-    }
-
-    if (!port) {
-        throw new Error("Missing required environment variable: PORT");
-    }
-
-    if (!dbHost) {
-        throw new Error("Missing required environment variable: DB_HOST");
-    }
-
-    if (!dbPort) {
-        throw new Error("Missing required environment variable: DB_PORT");
-    }
-
-    if (!dbName) {
-        throw new Error("Missing required environment variable: DB_NAME");
-    }
-
-    if (!dbUser) {
-        throw new Error("Missing required environment variable: DB_USER");
-    }
-
-    if (!dbPassword) {
-        throw new Error("Missing required environment variable: DB_PASSWORD");
-    }
+    const nodeEnv = requireEnv("NODE_ENV");
 
     /* Validate NODE_ENV is a valid value */
     if (!["development", "production", "test"].includes(nodeEnv)) {
         throw new Error(
-            `Invalid NODE_ENV: ${nodeEnv}. Must be development, production, or test`
+            `Invalid NODE_ENV: "${nodeEnv}". Must be development, production, or test`
         );
-    }
-
-    /* Parse PORT as number */
-    const parsedPort = parseInt(port, 10);
-    if (isNaN(parsedPort)) {
-        throw new Error(`Invalid PORT: ${port}. Must be a number`);
-    }
-
-    /* Parse DB_PORT as number */
-    const parsedDbPort = parseInt(dbPort, 10);
-    if (isNaN(parsedDbPort)) {
-        throw new Error(`Invalid DB_PORT: ${dbPort}. Must be a number`);
     }
 
     return {
         nodeEnv: nodeEnv as Config["nodeEnv"],
-        port: parsedPort,
+        port: requireEnvInt("PORT"),
         database: {
-            host: dbHost,
-            port: parsedDbPort,
-            name: dbName,
-            user: dbUser,
-            password: dbPassword,
+            host: requireEnv("DB_HOST"),
+            port: requireEnvInt("DB_PORT"),
+            name: requireEnv("DB_NAME"),
+            user: requireEnv("DB_USER"),
+            password: requireEnv("DB_PASSWORD"),
         },
     };
 }

@@ -1,5 +1,6 @@
-import { UserRepository, type User } from "./user.repository.js";
+import { UserRepository } from "./user.repository.js";
 import { hashPassword } from "./password.util.js";
+import { ValidationError, ConflictError } from "./auth.errors.js";
 
 export interface RegisterData {
     email: string;
@@ -16,25 +17,26 @@ export class AuthService {
     constructor(private userRepository: UserRepository) { }
 
     async register(data: RegisterData): Promise<RegisterResult> {
-
+        /* Validate all inputs before hitting the database */
         if (!this.isValidEmail(data.email)) {
-            throw new Error("Invalid email format");
-        }
-
-        const existingUser = await this.userRepository.findByEmail(data.email);
-        if (existingUser) {
-            throw new Error("Email already registered");
+            throw new ValidationError("Invalid email format");
         }
 
         if (!this.isValidPassword(data.password)) {
-            throw new Error("Password must be at least 8 characters long");
+            throw new ValidationError("Password must be at least 8 characters long");
         }
 
-        const password_hash = await hashPassword(data.password);
+        /* Check for existing user only after input validation passes */
+        const existingUser = await this.userRepository.findByEmail(data.email);
+        if (existingUser) {
+            throw new ConflictError("Email already registered");
+        }
+
+        const passwordHash = await hashPassword(data.password);
 
         const user = await this.userRepository.create({
             email: data.email,
-            password_hash,
+            password_hash: passwordHash,
         });
 
         return {

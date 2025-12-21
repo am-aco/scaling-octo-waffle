@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service.js";
+import { ValidationError, ConflictError } from "./auth.errors.js";
 
 export class AuthController {
     constructor(private authService: AuthService) { }
@@ -28,16 +29,14 @@ export class AuthController {
             });
         }
         catch (error) {
+            if (error instanceof ValidationError) {
+                res.status(400).json({ error: error.message });
+                return;
+            }
 
-            if (error instanceof Error) {
-                if (
-                    error.message.includes("Invalid") ||
-                    error.message.includes("already registered") ||
-                    error.message.includes("Password must")
-                ) {
-                    res.status(400).json({ error: error.message });
-                    return;
-                }
+            if (error instanceof ConflictError) {
+                res.status(409).json({ error: error.message });
+                return;
             }
 
             console.error("Registration error:", error);

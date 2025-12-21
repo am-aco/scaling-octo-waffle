@@ -27,7 +27,7 @@ export async function verifyPassword(
         return await argon2.verify(hash, password);
     }
     catch (error) {
-
+        console.error("Password verification failed:", error);
         return false;
     }
 }
