@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service.js";
 import { ValidationError, ConflictError } from "./auth.errors.js";
+import { HTTP_STATUS } from "../infrastructure/http.js";
 
 export class AuthController {
     constructor(private authService: AuthService) { }
@@ -15,7 +16,7 @@ export class AuthController {
             const { email, password } = req.body;
 
             if (!email || !password) {
-                res.status(400).json({
+                res.status(HTTP_STATUS.BAD_REQUEST).json({
                     error: "Email and password are required",
                 });
                 return;
@@ -23,24 +24,24 @@ export class AuthController {
 
             const result = await this.authService.register({ email, password });
 
-            res.status(201).json({
+            res.status(HTTP_STATUS.CREATED).json({
                 message: "User registered successfully",
                 user: result,
             });
         }
         catch (error) {
             if (error instanceof ValidationError) {
-                res.status(400).json({ error: error.message });
+                res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
                 return;
             }
 
             if (error instanceof ConflictError) {
-                res.status(409).json({ error: error.message });
+                res.status(HTTP_STATUS.CONFLICT).json({ error: error.message });
                 return;
             }
 
             console.error("Registration error:", error);
-            res.status(500).json({ error: "Internal server error" });
+            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     };
 }
