@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { SessionRepository, type SessionUser } from "./session.repository.js";
+import { HTTP_STATUS } from "../infrastructure/http.js";
 
 declare global {
     namespace Express {
@@ -36,4 +37,19 @@ export function createAuthMiddleware(sessionRepository: SessionRepository) {
             next();
         }
     };
+}
+
+export function requireAuth(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): void {
+    if (!req.user) {
+        res.status(HTTP_STATUS.UNAUTHORIZED).json({
+            error: "Authentication required",
+        });
+        return;
+    }
+
+    next();
 }

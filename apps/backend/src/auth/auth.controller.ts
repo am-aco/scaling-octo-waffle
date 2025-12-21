@@ -104,4 +104,10 @@ export class AuthController {
             res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     };
+
+    getProfile = (req: Request, res: Response): void => {
+        res.status(HTTP_STATUS.OK).json({
+            user: req.user,
+        });
+    };
 }
