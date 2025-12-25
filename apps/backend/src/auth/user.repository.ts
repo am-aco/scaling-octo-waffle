@@ -9,6 +9,8 @@ export interface User {
     is_active: boolean;
     role_id: string;
     last_login: Date | null;
+    failed_login_attempts: number;
+    locked_until: Date | null;
     created_at: Date;
     updated_at: Date;
 }
@@ -268,6 +270,48 @@ export class UserRepository {
      */
     async markEmailAsVerified(userId: string, client?: PoolClient): Promise<void> {
         const query = "UPDATE users SET email_verified = NOW(), updated_at = NOW() WHERE id = $1";
+        const executor = client ?? pool;
+        await executor.query(query, [userId]);
+    }
+
+    /*
+     * Increment failed login attempts
+     * Supports transactions via optional client parameter
+     */
+    async incrementFailedLoginAttempts(userId: string, client?: PoolClient): Promise<void> {
+        const query = `
+            UPDATE users
+            SET failed_login_attempts = failed_login_attempts + 1, updated_at = NOW()
+            WHERE id = $1
+        `;
+        const executor = client ?? pool;
+        await executor.query(query, [userId]);
+    }
+
+    /*
+     * Lock account until specified time
+     * Supports transactions via optional client parameter
+     */
+    async lockAccount(userId: string, lockedUntil: Date, client?: PoolClient): Promise<void> {
+        const query = `
+            UPDATE users
+            SET locked_until = $1, updated_at = NOW()
+            WHERE id = $2
+        `;
+        const executor = client ?? pool;
+        await executor.query(query, [lockedUntil, userId]);
+    }
+
+    /*
+     * Reset failed login attempts and unlock account
+     * Supports transactions via optional client parameter
+     */
+    async resetFailedLoginAttempts(userId: string, client?: PoolClient): Promise<void> {
+        const query = `
+            UPDATE users
+            SET failed_login_attempts = 0, locked_until = NULL, updated_at = NOW()
+            WHERE id = $1
+        `;
         const executor = client ?? pool;
         await executor.query(query, [userId]);
     }

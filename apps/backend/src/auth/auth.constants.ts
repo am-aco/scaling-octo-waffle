@@ -8,3 +8,9 @@ export const COOKIE_OPTIONS = {
     sameSite: "strict" as const,
     maxAge: SESSION_DURATION_MS,
 };
+
+export const MAX_LOGIN_ATTEMPTS = 5;
+
+export const LOCKOUT_DURATION_MINUTES = 15;
+
+export const LOCKOUT_DURATION_MS = LOCKOUT_DURATION_MINUTES * 60 * 1000;

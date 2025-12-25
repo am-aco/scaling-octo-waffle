@@ -4,7 +4,7 @@ import { hashPassword, verifyPassword } from "./password.util.js";
 import { isValidEmail, isValidPassword } from "./validation.util.js";
 import { ValidationError, ConflictError } from "./auth.errors.js";
 import { withTransaction } from "../infrastructure/database.js";
-import { SESSION_DURATION_DAYS } from "./auth.constants.js";
+import { SESSION_DURATION_DAYS, MAX_LOGIN_ATTEMPTS, LOCKOUT_DURATION_MS } from "./auth.constants.js";
 
 export interface RegisterData {
     email: string;
@@ -71,19 +71,44 @@ export class AuthenticationService {
             throw new ValidationError("Invalid email or password");
         }
 
-        const isValidPassword = await verifyPassword(user.password_hash, data.password);
-        if (!isValidPassword) {
-            throw new ValidationError("Invalid email or password");
-        }
-
         if (!user.is_active) {
             throw new ValidationError("Account is inactive");
+        }
+
+        const now = new Date();
+
+        if (user.locked_until && user.locked_until > now) {
+            const minutesRemaining = Math.ceil((user.locked_until.getTime() - now.getTime()) / 60000);
+            throw new ValidationError(
+                `Account is temporarily locked due to too many failed login attempts. Try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}.`
+            );
+        }
+
+        if (user.locked_until && user.locked_until <= now) {
+            await this.userRepository.resetFailedLoginAttempts(user.id);
+        }
+
+        const isValidPassword = await verifyPassword(user.password_hash, data.password);
+
+        if (!isValidPassword) {
+            await withTransaction(async (client) => {
+                await this.userRepository.incrementFailedLoginAttempts(user.id, client);
+
+                const updatedUser = await this.userRepository.findById(user.id);
+                if (updatedUser && updatedUser.failed_login_attempts >= MAX_LOGIN_ATTEMPTS) {
+                    const lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
+                    await this.userRepository.lockAccount(user.id, lockedUntil, client);
+                }
+            });
+
+            throw new ValidationError("Invalid email or password");
         }
 
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
 
         const session = await withTransaction(async (client) => {
+            await this.userRepository.resetFailedLoginAttempts(user.id, client);
             await this.userRepository.updateLastLogin(user.id, client);
             return await this.sessionRepository.create(user.id, expiresAt, client);
         });
