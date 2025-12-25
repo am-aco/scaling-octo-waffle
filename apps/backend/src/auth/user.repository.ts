@@ -260,4 +260,15 @@ export class UserRepository {
         const executor = client ?? pool;
         await executor.query(query, [passwordHash, userId]);
     }
+
+    /*
+     * Mark user's email as verified
+     * Supports transactions via optional client parameter
+     * Used during email verification flow
+     */
+    async markEmailAsVerified(userId: string, client?: PoolClient): Promise<void> {
+        const query = "UPDATE users SET email_verified = NOW(), updated_at = NOW() WHERE id = $1";
+        const executor = client ?? pool;
+        await executor.query(query, [userId]);
+    }
 }
