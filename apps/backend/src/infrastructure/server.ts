@@ -16,6 +16,8 @@ import { EmailVerificationService } from "../auth/email-verification.service.js"
 import { createUserRouter } from "../users/user.routes.js";
 import { createPostRouter } from "../posts/post.routes.js";
 import { EmailService } from "./email.service.js";
+import { RateLimiter } from "./rate-limiter.js";
+import { CsrfProtection } from "./csrf.js";
 import { pool } from "./database.js";
 import { HTTP_STATUS } from "./http.js";
 
@@ -44,6 +46,33 @@ export function createServer(): Express {
         emailVerificationTokenRepository,
     );
 
+    /* Rate limiter instance */
+    const rateLimiter = new RateLimiter();
+
+    /* CSRF protection instance */
+    const csrfProtection = new CsrfProtection();
+
+    /* Rate limiting middleware for different endpoints */
+    const loginRateLimit = rateLimiter.createMiddleware({
+        max: 5,
+        windowMs: 15 * 60 * 1000, /* 5 attempts per 15 minutes */
+    });
+
+    const registerRateLimit = rateLimiter.createMiddleware({
+        max: 3,
+        windowMs: 60 * 60 * 1000, /* 3 attempts per hour */
+    });
+
+    const passwordResetRateLimit = rateLimiter.createMiddleware({
+        max: 3,
+        windowMs: 60 * 60 * 1000, /* 3 attempts per hour */
+    });
+
+    const emailVerificationRateLimit = rateLimiter.createMiddleware({
+        max: 3,
+        windowMs: 60 * 60 * 1000, /* 3 attempts per hour */
+    });
+
     /* Attach authenticated user to request (supports both session and JWT) */
     app.use(createAuthMiddleware(sessionRepository));
     app.use(createJwtAuthMiddleware(userRepository));
@@ -53,7 +82,12 @@ export function createServer(): Express {
     });
 
     /* Mount authentication routes at /auth */
-    app.use("/auth", createAuthenticationRouter({ sessionRepository }));
+    app.use("/auth", createAuthenticationRouter({
+        sessionRepository,
+        loginRateLimit,
+        registerRateLimit,
+        csrfProtection,
+    }));
 
     /* Mount JWT authentication routes at /auth/jwt */
     app.use("/auth/jwt", createJwtRouter());
@@ -62,10 +96,10 @@ export function createServer(): Express {
     app.use("/auth/token", createTokenRouter());
 
     /* Mount password reset routes at /auth/password-reset */
-    app.use("/auth/password-reset", createPasswordResetRouter(passwordResetService, emailService));
+    app.use("/auth/password-reset", createPasswordResetRouter(passwordResetService, emailService, passwordResetRateLimit));
 
     /* Mount email verification routes at /auth/email-verification */
-    app.use("/auth/email-verification", createEmailVerificationRouter(emailVerificationService, emailService, userRepository));
+    app.use("/auth/email-verification", createEmailVerificationRouter(emailVerificationService, emailService, userRepository, emailVerificationRateLimit));
 
     /* Mount user management routes at /users */
     app.use("/users", createUserRouter());

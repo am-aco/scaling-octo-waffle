@@ -3,9 +3,13 @@ import { AuthenticationService } from "./authentication.service.js";
 import { ValidationError, ConflictError } from "./auth.errors.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import { COOKIE_OPTIONS, REMEMBER_ME_DURATION_MS } from "./auth.constants.js";
+import type { CsrfProtection } from "../infrastructure/csrf.js";
 
 export class AuthenticationController {
-    constructor(private authenticationService: AuthenticationService) { }
+    constructor(
+        private authenticationService: AuthenticationService,
+        private csrfProtection?: CsrfProtection,
+    ) { }
 
     /*
      * Handle POST /auth/register
@@ -74,9 +78,16 @@ export class AuthenticationController {
 
             res.cookie("sessionId", result.session.id, cookieOptions);
 
+            let csrfToken: string | undefined;
+            if (this.csrfProtection) {
+                csrfToken = this.csrfProtection.generateToken();
+                this.csrfProtection.setCsrfCookie(res, csrfToken);
+            }
+
             res.status(HTTP_STATUS.OK).json({
                 message: "Login successful",
                 user: result.user,
+                ...(csrfToken && { csrfToken }),
             });
         }
         catch (error) {
