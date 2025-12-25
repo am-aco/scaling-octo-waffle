@@ -12,6 +12,12 @@ interface Config {
         user: string;
         password: string;
     };
+    jwt: {
+        secret: string;
+        expiresIn: string | number;
+        accessTokenExpiresIn: string | number;
+        refreshTokenExpiresIn: string | number;
+    };
 }
 
 /* Helper to get required environment variable or throw */
@@ -52,6 +58,12 @@ function loadConfig(): Config {
             name: requireEnv("DB_NAME"),
             user: requireEnv("DB_USER"),
             password: requireEnv("DB_PASSWORD"),
+        },
+        jwt: {
+            secret: requireEnv("JWT_SECRET"),
+            expiresIn: requireEnv("JWT_EXPIRES_IN"),
+            accessTokenExpiresIn: requireEnv("JWT_ACCESS_TOKEN_EXPIRES_IN"),
+            refreshTokenExpiresIn: requireEnv("JWT_REFRESH_TOKEN_EXPIRES_IN"),
         },
     };
 }

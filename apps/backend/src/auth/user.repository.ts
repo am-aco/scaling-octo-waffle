@@ -202,4 +202,51 @@ export class UserRepository {
 
         return result.rowCount !== null && result.rowCount > 0;
     }
+
+    /*
+     * Find user by ID with permissions
+     * Used for JWT authentication to load user + permissions
+     * Returns null if user doesn't exist or is inactive
+     */
+    async findByIdWithPermissions(userId: string): Promise<{
+        id: string;
+        email: string;
+        permissions: string[];
+    } | null> {
+        const userQuery = `
+            SELECT users.id, users.email, users.role_id
+            FROM users
+            WHERE users.id = $1 AND users.is_active = true
+        `;
+
+        const userResult = await pool.query<{ id: string; email: string; role_id: string }>(
+            userQuery,
+            [userId]
+        );
+
+        const user = userResult.rows[0];
+
+        if (!user) {
+            return null;
+        }
+
+        const permissionsQuery = `
+            SELECT permissions.name
+            FROM permissions
+            INNER JOIN role_permissions ON permissions.id = role_permissions.permission_id
+            WHERE role_permissions.role_id = $1
+            ORDER BY permissions.name
+        `;
+
+        const permissionsResult = await pool.query<{ name: string }>(
+            permissionsQuery,
+            [user.role_id]
+        );
+
+        return {
+            id: user.id,
+            email: user.email,
+            permissions: permissionsResult.rows.map(p => p.name),
+        };
+    }
 }
