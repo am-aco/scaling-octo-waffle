@@ -1,4 +1,5 @@
-import { Router } from 'express';
+import type { Router, RequestHandler } from 'express';
+import { Router as ExpressRouter } from 'express';
 import type { PasswordResetService } from './password-reset.service.js';
 import type { EmailService } from '../infrastructure/email.service.js';
 import { HTTP_STATUS } from '../infrastructure/http.js';
@@ -6,10 +7,13 @@ import { HTTP_STATUS } from '../infrastructure/http.js';
 export function createPasswordResetRouter(
     passwordResetService: PasswordResetService,
     emailService: EmailService,
+    rateLimit?: RequestHandler,
 ): Router {
-    const router = Router();
+    const router = ExpressRouter();
 
-    router.post('/request', async (req, res) => {
+    const requestMiddleware = rateLimit ? [rateLimit] : [];
+
+    router.post('/request', ...requestMiddleware, async (req, res) => {
         try {
             const { email } = req.body;
 

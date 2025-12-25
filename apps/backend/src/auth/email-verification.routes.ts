@@ -1,4 +1,5 @@
-import { Router } from 'express';
+import type { Router, RequestHandler } from 'express';
+import { Router as ExpressRouter } from 'express';
 import type { EmailVerificationService } from './email-verification.service.js';
 import type { EmailService } from '../infrastructure/email.service.js';
 import type { UserRepository } from './user.repository.js';
@@ -8,8 +9,11 @@ export function createEmailVerificationRouter(
     emailVerificationService: EmailVerificationService,
     emailService: EmailService,
     userRepository: UserRepository,
+    rateLimit?: RequestHandler,
 ): Router {
-    const router = Router();
+    const router = ExpressRouter();
+
+    const resendMiddleware = rateLimit ? [rateLimit] : [];
 
     router.post('/verify', async (req, res) => {
         try {
@@ -42,7 +46,7 @@ export function createEmailVerificationRouter(
         }
     });
 
-    router.post('/resend', async (req, res) => {
+    router.post('/resend', ...resendMiddleware, async (req, res) => {
         try {
             const { email } = req.body;
 
