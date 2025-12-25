@@ -4,6 +4,7 @@ import { createAuthenticationRouter } from "../auth/authentication.routes.js";
 import { createAuthMiddleware } from "../auth/authentication.middleware.js";
 import { SessionRepository } from "../auth/session.repository.js";
 import { createUserRouter } from "../users/user.routes.js";
+import { createPostRouter } from "../posts/post.routes.js";
 import { HTTP_STATUS } from "./http.js";
 
 /* Creates and configures the Express application */
@@ -28,6 +29,9 @@ export function createServer(): Express {
 
     /* Mount user management routes at /users */
     app.use("/users", createUserRouter());
+
+    /* Mount posts routes at /posts */
+    app.use("/posts", createPostRouter());
 
     return app;
 }
