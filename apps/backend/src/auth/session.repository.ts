@@ -6,6 +6,7 @@ export interface Session {
     user_id: string;
     created_at: Date;
     expires_at: Date;
+    is_remember_me: boolean;
 }
 
 export interface SessionUser {
@@ -23,6 +24,7 @@ interface SessionWithUserRow {
     user_id: string;
     created_at: Date;
     expires_at: Date;
+    is_remember_me: boolean;
     user_id_fk: string;
     user_email: string;
     user_role_id: string;
@@ -32,16 +34,17 @@ export class SessionRepository {
     async create(
         userId: string,
         expiresAt: Date,
+        isRememberMe: boolean = false,
         client?: PoolClient
     ): Promise<Session> {
         const query = `
-            INSERT INTO sessions (user_id, expires_at)
-            VALUES ($1, $2)
+            INSERT INTO sessions (user_id, expires_at, is_remember_me)
+            VALUES ($1, $2, $3)
             RETURNING *
         `;
 
         const executor = client ?? pool;
-        const result = await executor.query<Session>(query, [userId, expiresAt]);
+        const result = await executor.query<Session>(query, [userId, expiresAt, isRememberMe]);
 
         return result.rows[0]!;
     }
@@ -58,6 +61,7 @@ export class SessionRepository {
                 sessions.user_id,
                 sessions.created_at,
                 sessions.expires_at,
+                sessions.is_remember_me,
                 users.id AS user_id_fk,
                 users.email AS user_email,
                 users.role_id AS user_role_id
@@ -93,6 +97,7 @@ export class SessionRepository {
             user_id: row.user_id,
             created_at: row.created_at,
             expires_at: row.expires_at,
+            is_remember_me: row.is_remember_me,
             user: {
                 id: row.user_id_fk,
                 email: row.user_email,

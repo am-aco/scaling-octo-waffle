@@ -2,6 +2,10 @@ export const SESSION_DURATION_DAYS = 7;
 
 export const SESSION_DURATION_MS = SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000;
 
+export const REMEMBER_ME_DURATION_DAYS = 30;
+
+export const REMEMBER_ME_DURATION_MS = REMEMBER_ME_DURATION_DAYS * 24 * 60 * 60 * 1000;
+
 export const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

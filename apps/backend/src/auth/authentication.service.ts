@@ -4,7 +4,7 @@ import { hashPassword, verifyPassword } from "./password.util.js";
 import { isValidEmail, isValidPassword } from "./validation.util.js";
 import { ValidationError, ConflictError } from "./auth.errors.js";
 import { withTransaction } from "../infrastructure/database.js";
-import { SESSION_DURATION_DAYS, MAX_LOGIN_ATTEMPTS, LOCKOUT_DURATION_MS } from "./auth.constants.js";
+import { SESSION_DURATION_DAYS, REMEMBER_ME_DURATION_DAYS, MAX_LOGIN_ATTEMPTS, LOCKOUT_DURATION_MS } from "./auth.constants.js";
 
 export interface RegisterData {
     email: string;
@@ -20,6 +20,7 @@ export interface RegisterResult {
 export interface LoginData {
     email: string;
     password: string;
+    rememberMe?: boolean;
 }
 
 export interface LoginResult {
@@ -104,13 +105,16 @@ export class AuthenticationService {
             throw new ValidationError("Invalid email or password");
         }
 
+        const isRememberMe = data.rememberMe === true;
+        const sessionDuration = isRememberMe ? REMEMBER_ME_DURATION_DAYS : SESSION_DURATION_DAYS;
+
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
+        expiresAt.setDate(expiresAt.getDate() + sessionDuration);
 
         const session = await withTransaction(async (client) => {
             await this.userRepository.resetFailedLoginAttempts(user.id, client);
             await this.userRepository.updateLastLogin(user.id, client);
-            return await this.sessionRepository.create(user.id, expiresAt, client);
+            return await this.sessionRepository.create(user.id, expiresAt, isRememberMe, client);
         });
 
         return {
