@@ -249,4 +249,15 @@ export class UserRepository {
             permissions: permissionsResult.rows.map(p => p.name),
         };
     }
+
+    /*
+     * Update user's password
+     * Supports transactions via optional client parameter
+     * Used during password reset flow
+     */
+    async updatePassword(userId: string, passwordHash: string, client?: PoolClient): Promise<void> {
+        const query = "UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2";
+        const executor = client ?? pool;
+        await executor.query(query, [passwordHash, userId]);
+    }
 }

@@ -5,10 +5,15 @@ import { createAuthMiddleware } from "../auth/authentication.middleware.js";
 import { createJwtAuthMiddleware } from "../auth/jwt-authentication.middleware.js";
 import { createJwtRouter } from "../auth/jwt.routes.js";
 import { createTokenRouter } from "../auth/token.routes.js";
+import { createPasswordResetRouter } from "../auth/password-reset.routes.js";
 import { SessionRepository } from "../auth/session.repository.js";
 import { UserRepository } from "../auth/user.repository.js";
+import { PasswordResetTokenRepository } from "../auth/password-reset-token.repository.js";
+import { PasswordResetService } from "../auth/password-reset.service.js";
 import { createUserRouter } from "../users/user.routes.js";
 import { createPostRouter } from "../posts/post.routes.js";
+import { EmailService } from "./email.service.js";
+import { pool } from "./database.js";
 import { HTTP_STATUS } from "./http.js";
 
 /* Creates and configures the Express application */
@@ -21,6 +26,15 @@ export function createServer(): Express {
     /* Shared repository instances */
     const sessionRepository = new SessionRepository();
     const userRepository = new UserRepository();
+    const passwordResetTokenRepository = new PasswordResetTokenRepository(pool);
+
+    /* Shared service instances */
+    const emailService = new EmailService('http://localhost:3000');
+    const passwordResetService = new PasswordResetService(
+        userRepository,
+        passwordResetTokenRepository,
+        sessionRepository,
+    );
 
     /* Attach authenticated user to request (supports both session and JWT) */
     app.use(createAuthMiddleware(sessionRepository));
@@ -38,6 +52,9 @@ export function createServer(): Express {
 
     /* Mount refresh token routes at /auth/token */
     app.use("/auth/token", createTokenRouter());
+
+    /* Mount password reset routes at /auth/password-reset */
+    app.use("/auth/password-reset", createPasswordResetRouter(passwordResetService, emailService));
 
     /* Mount user management routes at /users */
     app.use("/users", createUserRouter());
