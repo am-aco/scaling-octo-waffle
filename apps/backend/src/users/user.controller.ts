@@ -1,12 +1,10 @@
 import type { Request, Response } from "express";
 import { HTTP_STATUS } from "../infrastructure/http.js";
-import { UserRepository } from "./user.repository.js";
-import { hashPassword } from "../auth/password.util.js";
-import { isValidEmail, isValidPassword } from "../auth/validation.util.js";
+import type { UserService } from "./user.service.js";
 import { ValidationError, ConflictError } from "../auth/auth.errors.js";
 
 export class UserController {
-    constructor(private userRepository: UserRepository) { }
+    constructor(private userService: UserService) {}
 
     getUserById = async (req: Request, res: Response): Promise<void> => {
         try {
@@ -19,7 +17,7 @@ export class UserController {
                 return;
             }
 
-            const user = await this.userRepository.findByIdWithRole(userId);
+            const user = await this.userService.getUserById(userId);
 
             if (!user) {
                 res.status(HTTP_STATUS.NOT_FOUND).json({
@@ -40,7 +38,7 @@ export class UserController {
 
     getAllUsers = async (_req: Request, res: Response): Promise<void> => {
         try {
-            const users = await this.userRepository.findAllWithRoles();
+            const users = await this.userService.getAllUsers();
 
             res.status(HTTP_STATUS.OK).json({
                 users,
@@ -63,23 +61,9 @@ export class UserController {
                 return;
             }
 
-            if (!isValidEmail(email)) {
-                throw new ValidationError("Invalid email format");
-            }
-
-            if (!isValidPassword(password)) {
-                throw new ValidationError("Password must be at least 8 characters");
-            }
-
-            const existingUser = await this.userRepository.findByEmail(email);
-            if (existingUser) {
-                throw new ConflictError("Email already registered");
-            }
-
-            const passwordHash = await hashPassword(password);
-            const user = await this.userRepository.createWithRole({
+            const user = await this.userService.createUser({
                 email,
-                password_hash: passwordHash,
+                password,
                 role_id,
             });
 
@@ -128,18 +112,7 @@ export class UserController {
                 return;
             }
 
-            if (email && !isValidEmail(email)) {
-                throw new ValidationError("Invalid email format");
-            }
-
-            if (email) {
-                const existingUser = await this.userRepository.findByEmail(email);
-                if (existingUser && existingUser.id !== userId) {
-                    throw new ConflictError("Email already in use");
-                }
-            }
-
-            const updatedUser = await this.userRepository.update(userId, {
+            const updatedUser = await this.userService.updateUser(userId, {
                 email,
                 is_active,
                 role_id,
@@ -190,7 +163,7 @@ export class UserController {
                 return;
             }
 
-            const deleted = await this.userRepository.deleteById(userId);
+            const deleted = await this.userService.deleteUser(userId);
 
             if (!deleted) {
                 res.status(HTTP_STATUS.NOT_FOUND).json({

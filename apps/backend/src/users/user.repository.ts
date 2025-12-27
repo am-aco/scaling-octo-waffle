@@ -27,9 +27,9 @@ export interface CreateUserWithRoleData {
 }
 
 export interface UpdateUserData {
-    email?: string;
-    is_active?: boolean;
-    role_id?: string;
+    email?: string | undefined;
+    is_active?: boolean | undefined;
+    role_id?: string | undefined;
 }
 
 

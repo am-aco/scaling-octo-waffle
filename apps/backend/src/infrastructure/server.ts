@@ -17,8 +17,10 @@ import { AuthenticationService } from "../auth/authentication.service.js";
 import { JwtService } from "../auth/jwt.service.js";
 import { TokenService } from "../auth/token.service.js";
 import { UserRepository } from "../users/user.repository.js";
+import { UserService } from "../users/user.service.js";
 import { createUserRouter } from "../users/user.routes.js";
 import { PostRepository } from "../posts/post.repository.js";
+import { PostService } from "../posts/post.service.js";
 import { createPostRouter } from "../posts/post.routes.js";
 import { EmailService } from "./email.service.js";
 import { RateLimiter } from "./rate-limiter.js";
@@ -60,6 +62,8 @@ export function createServer(): Express {
         userRepository,
         emailVerificationTokenRepository,
     );
+    const userService = new UserService(userRepository);
+    const postService = new PostService(postRepository);
 
     /* Rate limiter instance */
     const rateLimiter = new RateLimiter();
@@ -127,15 +131,14 @@ export function createServer(): Express {
     app.use("/auth/email-verification", createEmailVerificationRouter({
         emailVerificationService,
         emailService,
-        userRepository,
         rateLimit: emailVerificationRateLimit,
     }));
 
     /* Mount user management routes at /users */
-    app.use("/users", createUserRouter({ userRepository }));
+    app.use("/users", createUserRouter({ userService }));
 
     /* Mount posts routes at /posts */
-    app.use("/posts", createPostRouter({ postRepository }));
+    app.use("/posts", createPostRouter({ postService }));
 
     return app;
 }

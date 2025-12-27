@@ -1,10 +1,10 @@
 import type { Request, Response } from "express";
 import { HTTP_STATUS } from "../infrastructure/http.js";
-import { PostRepository } from "./post.repository.js";
+import type { PostService } from "./post.service.js";
 import { ValidationError, NotFoundError } from "../auth/auth.errors.js";
 
 export class PostController {
-    constructor(private postRepository: PostRepository) { }
+    constructor(private postService: PostService) {}
 
     createPost = async (req: Request, res: Response): Promise<void> => {
         try {
@@ -24,8 +24,8 @@ export class PostController {
                 return;
             }
 
-            const post = await this.postRepository.create({
-                user_id: req.user.id,
+            const post = await this.postService.createPost({
+                userId: req.user.id,
                 title,
                 content,
             });
@@ -52,7 +52,7 @@ export class PostController {
 
     getAllPosts = async (_req: Request, res: Response): Promise<void> => {
         try {
-            const posts = await this.postRepository.findAll();
+            const posts = await this.postService.getAllPosts();
 
             res.status(HTTP_STATUS.OK).json({
                 posts,
@@ -79,7 +79,7 @@ export class PostController {
                 return;
             }
 
-            const post = await this.postRepository.findByIdWithAuthor(postId);
+            const post = await this.postService.getPostById(postId);
 
             if (!post) {
                 res.status(HTTP_STATUS.NOT_FOUND).json({
@@ -125,7 +125,7 @@ export class PostController {
                 return;
             }
 
-            const updatedPost = await this.postRepository.update(postId, {
+            const updatedPost = await this.postService.updatePost(postId, {
                 title,
                 content,
             });
@@ -172,7 +172,7 @@ export class PostController {
                 return;
             }
 
-            const deleted = await this.postRepository.deleteById(postId);
+            const deleted = await this.postService.deletePost(postId);
 
             if (!deleted) {
                 res.status(HTTP_STATUS.NOT_FOUND).json({

@@ -1,20 +1,17 @@
 import { Router } from "express";
 import { PostController } from "./post.controller.js";
-import type { PostRepository } from "./post.repository.js";
-import { PostService } from "./post.service.js";
+import type { PostService } from "./post.service.js";
 import { requireAuth } from "../auth/authentication.middleware.js";
 import { requireOwnership } from "../auth/ownership.middleware.js";
 
 interface PostRouterDependencies {
-    postRepository: PostRepository;
+    postService: PostService;
 }
 
 export function createPostRouter(deps: PostRouterDependencies): Router {
     const router = Router();
 
-    const { postRepository } = deps;
-    const postService = new PostService(postRepository);
-    const postController = new PostController(postRepository);
+    const postController = new PostController(deps.postService);
 
     router.post("/", requireAuth, postController.createPost);
 
@@ -25,7 +22,7 @@ export function createPostRouter(deps: PostRouterDependencies): Router {
     router.put(
         "/:postId",
         requireOwnership({
-            ownerId: async (req) => postService.getOwnerId(req.params.postId!),
+            ownerId: async (req) => deps.postService.getOwnerId(req.params.postId!),
             bypassPermission: "posts:moderate",
         }),
         postController.updatePost
@@ -34,7 +31,7 @@ export function createPostRouter(deps: PostRouterDependencies): Router {
     router.delete(
         "/:postId",
         requireOwnership({
-            ownerId: async (req) => postService.getOwnerId(req.params.postId!),
+            ownerId: async (req) => deps.postService.getOwnerId(req.params.postId!),
             bypassPermission: "posts:moderate",
         }),
         postController.deletePost

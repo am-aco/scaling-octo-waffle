@@ -3,12 +3,10 @@ import { Router as ExpressRouter } from "express";
 import { EmailVerificationController } from "./email-verification.controller.js";
 import type { EmailVerificationService } from "./email-verification.service.js";
 import type { EmailService } from "../infrastructure/email.service.js";
-import type { UserRepository } from "../users/user.repository.js";
 
 interface EmailVerificationRouterDependencies {
     emailVerificationService: EmailVerificationService;
     emailService: EmailService;
-    userRepository: UserRepository;
     rateLimit?: RequestHandler;
 }
 
@@ -18,7 +16,6 @@ export function createEmailVerificationRouter(deps: EmailVerificationRouterDepen
     const controller = new EmailVerificationController(
         deps.emailVerificationService,
         deps.emailService,
-        deps.userRepository
     );
 
     const verifyMiddleware = deps.rateLimit

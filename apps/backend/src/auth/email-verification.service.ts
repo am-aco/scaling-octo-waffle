@@ -15,6 +15,17 @@ export interface VerifyEmailData {
     token: string;
 }
 
+export interface ResendVerificationData {
+    email: string;
+}
+
+export interface ResendVerificationResult {
+    success: boolean;
+    token?: string;
+    email?: string;
+    alreadyVerified?: boolean;
+}
+
 export class EmailVerificationService {
     constructor(
         private userRepository: UserRepository,
@@ -61,5 +72,28 @@ export class EmailVerificationService {
 
             await this.verificationTokenRepository.markAsUsed(data.token, client);
         });
+    }
+
+    async resendVerificationToken(data: ResendVerificationData): Promise<ResendVerificationResult> {
+        const user = await this.userRepository.findByEmail(data.email);
+
+        if (!user) {
+            return { success: true };
+        }
+
+        if (user.email_verified) {
+            return { success: false, alreadyVerified: true };
+        }
+
+        const token = await this.generateVerificationToken({
+            userId: user.id,
+            email: user.email,
+        });
+
+        return {
+            success: true,
+            token,
+            email: user.email,
+        };
     }
 }

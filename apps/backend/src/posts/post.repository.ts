@@ -16,8 +16,8 @@ export interface CreatePostData {
 }
 
 export interface UpdatePostData {
-    title?: string;
-    content?: string;
+    title?: string | undefined;
+    content?: string | undefined;
 }
 
 export interface PostWithAuthor {
