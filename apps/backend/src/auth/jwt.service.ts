@@ -1,6 +1,7 @@
-import { UserRepository } from "./user.repository.js";
+import { UserRepository } from "../users/user.repository.js";
 import { verifyPassword } from "./password.util.js";
 import { signToken } from "./jwt.util.js";
+import { AuthenticationError, ForbiddenError } from "./auth.errors.js";
 
 export class JwtService {
     constructor(private userRepository: UserRepository) {}
@@ -13,17 +14,17 @@ export class JwtService {
         const user = await this.userRepository.findByEmail(email);
 
         if (!user) {
-            throw new Error("Invalid credentials");
+            throw new AuthenticationError("Invalid credentials");
         }
 
         if (!user.is_active) {
-            throw new Error("Account is inactive");
+            throw new ForbiddenError("Account is inactive");
         }
 
         const isPasswordValid = await verifyPassword(user.password_hash, password);
 
         if (!isPasswordValid) {
-            throw new Error("Invalid credentials");
+            throw new AuthenticationError("Invalid credentials");
         }
 
         /* Generate JWT token */

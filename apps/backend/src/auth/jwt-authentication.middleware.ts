@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { UserRepository } from "./user.repository.js";
+import { UserRepository } from "../users/user.repository.js";
 import { verifyToken } from "./jwt.util.js";
 
 /* JWT authentication middleware factory */

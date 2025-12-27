@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { TokenService } from "./token.service.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
+import { AuthenticationError, ForbiddenError, NotFoundError } from "./auth.errors.js";
 
 export class TokenController {
     constructor(private tokenService: TokenService) {}
@@ -22,23 +23,23 @@ export class TokenController {
             res.status(HTTP_STATUS.OK).json(result);
         }
         catch (error) {
-            if (error instanceof Error && error.message === "Invalid credentials") {
+            if (error instanceof AuthenticationError) {
                 res.status(HTTP_STATUS.UNAUTHORIZED).json({
-                    error: "Invalid credentials",
+                    error: error.message,
                 });
                 return;
             }
 
-            if (error instanceof Error && error.message === "Account is inactive") {
+            if (error instanceof ForbiddenError) {
                 res.status(HTTP_STATUS.FORBIDDEN).json({
-                    error: "Account is inactive",
+                    error: error.message,
                 });
                 return;
             }
 
             console.error("Token login error:", error);
             res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-                error: "An error occurred during login",
+                error: "Internal server error",
             });
         }
     };
@@ -60,13 +61,22 @@ export class TokenController {
             res.status(HTTP_STATUS.OK).json(result);
         }
         catch (error) {
-            if (
-                error instanceof Error &&
-                (error.message === "Invalid or expired refresh token" ||
-                    error.message === "User not found" ||
-                    error.message === "Account is inactive")
-            ) {
+            if (error instanceof AuthenticationError) {
                 res.status(HTTP_STATUS.UNAUTHORIZED).json({
+                    error: error.message,
+                });
+                return;
+            }
+
+            if (error instanceof NotFoundError) {
+                res.status(HTTP_STATUS.NOT_FOUND).json({
+                    error: error.message,
+                });
+                return;
+            }
+
+            if (error instanceof ForbiddenError) {
+                res.status(HTTP_STATUS.FORBIDDEN).json({
                     error: error.message,
                 });
                 return;
@@ -74,7 +84,7 @@ export class TokenController {
 
             console.error("Token refresh error:", error);
             res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-                error: "An error occurred during token refresh",
+                error: "Internal server error",
             });
         }
     };
@@ -100,7 +110,7 @@ export class TokenController {
         catch (error) {
             console.error("Token logout error:", error);
             res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-                error: "An error occurred during logout",
+                error: "Internal server error",
             });
         }
     };

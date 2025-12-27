@@ -8,17 +8,18 @@ import { createTokenRouter } from "../auth/token.routes.js";
 import { createPasswordResetRouter } from "../auth/password-reset.routes.js";
 import { createEmailVerificationRouter } from "../auth/email-verification.routes.js";
 import { SessionRepository } from "../auth/session.repository.js";
-import { UserRepository } from "../auth/user.repository.js";
+import { RefreshTokenRepository } from "../auth/refresh-token.repository.js";
 import { PasswordResetTokenRepository } from "../auth/password-reset-token.repository.js";
 import { PasswordResetService } from "../auth/password-reset.service.js";
 import { EmailVerificationTokenRepository } from "../auth/email-verification-token.repository.js";
 import { EmailVerificationService } from "../auth/email-verification.service.js";
+import { UserRepository } from "../users/user.repository.js";
 import { createUserRouter } from "../users/user.routes.js";
+import { PostRepository } from "../posts/post.repository.js";
 import { createPostRouter } from "../posts/post.routes.js";
 import { EmailService } from "./email.service.js";
 import { RateLimiter } from "./rate-limiter.js";
 import { CsrfProtection } from "./csrf.js";
-import { pool } from "./database.js";
 import { HTTP_STATUS } from "./http.js";
 
 /* Creates and configures the Express application */
@@ -28,11 +29,13 @@ export function createServer(): Express {
     app.use(express.json());
     app.use(cookieParser());
 
-    /* Shared repository instances */
-    const sessionRepository = new SessionRepository();
+    /* Shared repository instances (composition root) */
     const userRepository = new UserRepository();
-    const passwordResetTokenRepository = new PasswordResetTokenRepository(pool);
-    const emailVerificationTokenRepository = new EmailVerificationTokenRepository(pool);
+    const sessionRepository = new SessionRepository();
+    const refreshTokenRepository = new RefreshTokenRepository();
+    const passwordResetTokenRepository = new PasswordResetTokenRepository();
+    const emailVerificationTokenRepository = new EmailVerificationTokenRepository();
+    const postRepository = new PostRepository();
 
     /* Shared service instances */
     const emailService = new EmailService('http://localhost:3000');
@@ -83,6 +86,7 @@ export function createServer(): Express {
 
     /* Mount authentication routes at /auth */
     app.use("/auth", createAuthenticationRouter({
+        userRepository,
         sessionRepository,
         loginRateLimit,
         registerRateLimit,
@@ -90,22 +94,38 @@ export function createServer(): Express {
     }));
 
     /* Mount JWT authentication routes at /auth/jwt */
-    app.use("/auth/jwt", createJwtRouter());
+    app.use("/auth/jwt", createJwtRouter({
+        userRepository,
+        rateLimit: loginRateLimit,
+    }));
 
     /* Mount refresh token routes at /auth/token */
-    app.use("/auth/token", createTokenRouter());
+    app.use("/auth/token", createTokenRouter({
+        userRepository,
+        refreshTokenRepository,
+        rateLimit: loginRateLimit,
+    }));
 
     /* Mount password reset routes at /auth/password-reset */
-    app.use("/auth/password-reset", createPasswordResetRouter(passwordResetService, emailService, passwordResetRateLimit));
+    app.use("/auth/password-reset", createPasswordResetRouter({
+        passwordResetService,
+        emailService,
+        rateLimit: passwordResetRateLimit,
+    }));
 
     /* Mount email verification routes at /auth/email-verification */
-    app.use("/auth/email-verification", createEmailVerificationRouter(emailVerificationService, emailService, userRepository, emailVerificationRateLimit));
+    app.use("/auth/email-verification", createEmailVerificationRouter({
+        emailVerificationService,
+        emailService,
+        userRepository,
+        rateLimit: emailVerificationRateLimit,
+    }));
 
     /* Mount user management routes at /users */
-    app.use("/users", createUserRouter());
+    app.use("/users", createUserRouter({ userRepository }));
 
     /* Mount posts routes at /posts */
-    app.use("/posts", createPostRouter());
+    app.use("/posts", createPostRouter({ postRepository }));
 
     return app;
 }

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { AuthenticationService } from "./authentication.service.js";
-import { ValidationError, ConflictError } from "./auth.errors.js";
+import { ValidationError, ConflictError, AuthenticationError, ForbiddenError } from "./auth.errors.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import { COOKIE_OPTIONS, REMEMBER_ME_DURATION_MS } from "./auth.constants.js";
 import type { CsrfProtection } from "../infrastructure/csrf.js";
@@ -91,8 +91,13 @@ export class AuthenticationController {
             });
         }
         catch (error) {
-            if (error instanceof ValidationError) {
+            if (error instanceof AuthenticationError) {
                 res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: error.message });
+                return;
+            }
+
+            if (error instanceof ForbiddenError) {
+                res.status(HTTP_STATUS.FORBIDDEN).json({ error: error.message });
                 return;
             }
 

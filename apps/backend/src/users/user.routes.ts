@@ -1,14 +1,17 @@
 import { Router } from "express";
 import { UserController } from "./user.controller.js";
-import { UserRepository } from "../auth/user.repository.js";
+import type { UserRepository } from "./user.repository.js";
 import { requirePermission } from "../auth/authorization.middleware.js";
-import { requireOwnershipOrPermission } from "../auth/ownership.middleware.js";
+import { requireOwnership } from "../auth/ownership.middleware.js";
 
-export function createUserRouter(): Router {
+interface UserRouterDependencies {
+    userRepository: UserRepository;
+}
+
+export function createUserRouter(deps: UserRouterDependencies): Router {
     const router = Router();
 
-    const userRepository = new UserRepository();
-    const userController = new UserController(userRepository);
+    const userController = new UserController(deps.userRepository);
 
     router.post("/", requirePermission("users:create"), userController.createUser);
 
@@ -16,8 +19,8 @@ export function createUserRouter(): Router {
 
     router.get(
         "/:userId",
-        requireOwnershipOrPermission({
-            resourceOwnerIdParam: "userId",
+        requireOwnership({
+            ownerId: "userId",
             bypassPermission: "users:read",
         }),
         userController.getUserById
@@ -25,8 +28,8 @@ export function createUserRouter(): Router {
 
     router.put(
         "/:userId",
-        requireOwnershipOrPermission({
-            resourceOwnerIdParam: "userId",
+        requireOwnership({
+            ownerId: "userId",
             bypassPermission: "users:update",
         }),
         userController.updateUser

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { HTTP_STATUS } from "../infrastructure/http.js";
-import { UserRepository } from "../auth/user.repository.js";
+import { UserRepository } from "./user.repository.js";
 import { hashPassword } from "../auth/password.util.js";
 import { isValidEmail, isValidPassword } from "../auth/validation.util.js";
 import { ValidationError, ConflictError } from "../auth/auth.errors.js";

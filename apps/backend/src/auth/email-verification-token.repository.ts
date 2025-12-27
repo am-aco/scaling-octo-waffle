@@ -1,44 +1,41 @@
-import type { Pool, PoolClient } from 'pg';
+import type { PoolClient } from 'pg';
+import { pool } from '../infrastructure/database.js';
 
 export interface EmailVerificationToken {
     id: string;
-    userId: string;
+    user_id: string;
     token: string;
-    createdAt: Date;
-    expiresAt: Date;
-    usedAt: Date | null;
+    created_at: Date;
+    expires_at: Date;
+    used_at: Date | null;
 }
 
 export interface CreateEmailVerificationTokenData {
-    userId: string;
+    user_id: string;
     token: string;
-    expiresAt: Date;
+    expires_at: Date;
 }
 
 export class EmailVerificationTokenRepository {
-    constructor(private pool: Pool) {}
-
     async create(
         data: CreateEmailVerificationTokenData,
         client?: PoolClient,
     ): Promise<EmailVerificationToken> {
-        const db = client ?? this.pool;
+        const db = client ?? pool;
 
         const result = await db.query<EmailVerificationToken>(
             `INSERT INTO email_verification_tokens (user_id, token, expires_at)
              VALUES ($1, $2, $3)
-             RETURNING id, user_id AS "userId", token, created_at AS "createdAt",
-                       expires_at AS "expiresAt", used_at AS "usedAt"`,
-            [data.userId, data.token, data.expiresAt],
+             RETURNING id, user_id, token, created_at, expires_at, used_at`,
+            [data.user_id, data.token, data.expires_at],
         );
 
         return result.rows[0]!;
     }
 
     async findByToken(token: string): Promise<EmailVerificationToken | null> {
-        const result = await this.pool.query<EmailVerificationToken>(
-            `SELECT id, user_id AS "userId", token, created_at AS "createdAt",
-                    expires_at AS "expiresAt", used_at AS "usedAt"
+        const result = await pool.query<EmailVerificationToken>(
+            `SELECT id, user_id, token, created_at, expires_at, used_at
              FROM email_verification_tokens
              WHERE token = $1`,
             [token],
@@ -48,7 +45,7 @@ export class EmailVerificationTokenRepository {
     }
 
     async markAsUsed(token: string, client?: PoolClient): Promise<boolean> {
-        const db = client ?? this.pool;
+        const db = client ?? pool;
 
         const result = await db.query(
             `UPDATE email_verification_tokens
@@ -61,7 +58,7 @@ export class EmailVerificationTokenRepository {
     }
 
     async deleteUnusedByUserId(userId: string, client?: PoolClient): Promise<void> {
-        const db = client ?? this.pool;
+        const db = client ?? pool;
 
         await db.query(
             `DELETE FROM email_verification_tokens
@@ -71,7 +68,7 @@ export class EmailVerificationTokenRepository {
     }
 
     async deleteExpired(): Promise<number> {
-        const result = await this.pool.query(
+        const result = await pool.query(
             `DELETE FROM email_verification_tokens
              WHERE expires_at < NOW()`,
         );

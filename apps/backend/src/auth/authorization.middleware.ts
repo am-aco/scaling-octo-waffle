@@ -2,9 +2,9 @@ import type { Request, Response, NextFunction } from "express";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import { AuthorizationService } from "./authorization.service.js";
 
-const authzService = new AuthorizationService();
-
 export function requirePermission(permission: string) {
+    const authzService = new AuthorizationService();
+
     return (req: Request, res: Response, next: NextFunction): void => {
         if (!req.user) {
             res.status(HTTP_STATUS.UNAUTHORIZED).json({
@@ -26,6 +26,8 @@ export function requirePermission(permission: string) {
 }
 
 export function requireAnyPermission(permissions: string[]) {
+    const authzService = new AuthorizationService();
+
     return (req: Request, res: Response, next: NextFunction): void => {
         if (!req.user) {
             res.status(HTTP_STATUS.UNAUTHORIZED).json({
@@ -47,6 +49,8 @@ export function requireAnyPermission(permissions: string[]) {
 }
 
 export function requireAllPermissions(permissions: string[]) {
+    const authzService = new AuthorizationService();
+
     return (req: Request, res: Response, next: NextFunction): void => {
         if (!req.user) {
             res.status(HTTP_STATUS.UNAUTHORIZED).json({

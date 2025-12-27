@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
 import { withTransaction } from '../infrastructure/database.js';
-import type { UserRepository } from './user.repository.js';
+import type { UserRepository } from '../users/user.repository.js';
 import type { EmailVerificationTokenRepository } from './email-verification-token.repository.js';
+import { ValidationError } from './auth.errors.js';
 
 const TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000; /* 24 hours */
 
@@ -29,9 +30,9 @@ export class EmailVerificationService {
 
             await this.verificationTokenRepository.create(
                 {
-                    userId: data.userId,
+                    user_id: data.userId,
                     token,
-                    expiresAt,
+                    expires_at: expiresAt,
                 },
                 client,
             );
@@ -40,28 +41,26 @@ export class EmailVerificationService {
         return token;
     }
 
-    async verifyEmail(data: VerifyEmailData): Promise<{ success: boolean; error?: string }> {
+    async verifyEmail(data: VerifyEmailData): Promise<void> {
         const verificationToken = await this.verificationTokenRepository.findByToken(data.token);
 
         if (!verificationToken) {
-            return { success: false, error: 'Invalid or expired verification token' };
+            throw new ValidationError('Invalid or expired verification token');
         }
 
-        if (verificationToken.usedAt) {
-            return { success: false, error: 'Email has already been verified' };
+        if (verificationToken.used_at) {
+            throw new ValidationError('Email has already been verified');
         }
 
-        if (verificationToken.expiresAt < new Date()) {
-            return { success: false, error: 'Verification token has expired' };
+        if (verificationToken.expires_at < new Date()) {
+            throw new ValidationError('Verification token has expired');
         }
 
         await withTransaction(async (client) => {
-            await this.userRepository.markEmailAsVerified(verificationToken.userId, client);
+            await this.userRepository.markEmailAsVerified(verificationToken.user_id, client);
 
             await this.verificationTokenRepository.markAsUsed(data.token, client);
         });
-
-        return { success: true };
     }
 
     private generateSecureToken(): string {

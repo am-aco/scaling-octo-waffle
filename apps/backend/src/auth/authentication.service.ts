@@ -1,8 +1,8 @@
-import { UserRepository } from "./user.repository.js";
+import { UserRepository } from "../users/user.repository.js";
 import { SessionRepository, type Session } from "./session.repository.js";
 import { hashPassword, verifyPassword } from "./password.util.js";
 import { isValidEmail, isValidPassword } from "./validation.util.js";
-import { ValidationError, ConflictError } from "./auth.errors.js";
+import { ValidationError, ConflictError, AuthenticationError, ForbiddenError } from "./auth.errors.js";
 import { withTransaction } from "../infrastructure/database.js";
 import { SESSION_DURATION_DAYS, REMEMBER_ME_DURATION_DAYS, MAX_LOGIN_ATTEMPTS, LOCKOUT_DURATION_MS } from "./auth.constants.js";
 
@@ -69,18 +69,18 @@ export class AuthenticationService {
     async login(data: LoginData): Promise<LoginResult> {
         const user = await this.userRepository.findByEmail(data.email);
         if (!user) {
-            throw new ValidationError("Invalid email or password");
+            throw new AuthenticationError("Invalid email or password");
         }
 
         if (!user.is_active) {
-            throw new ValidationError("Account is inactive");
+            throw new ForbiddenError("Account is inactive");
         }
 
         const now = new Date();
 
         if (user.locked_until && user.locked_until > now) {
             const minutesRemaining = Math.ceil((user.locked_until.getTime() - now.getTime()) / 60000);
-            throw new ValidationError(
+            throw new ForbiddenError(
                 `Account is temporarily locked due to too many failed login attempts. Try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}.`
             );
         }
@@ -102,7 +102,7 @@ export class AuthenticationService {
                 }
             });
 
-            throw new ValidationError("Invalid email or password");
+            throw new AuthenticationError("Invalid email or password");
         }
 
         const isRememberMe = data.rememberMe === true;
@@ -114,7 +114,11 @@ export class AuthenticationService {
         const session = await withTransaction(async (client) => {
             await this.userRepository.resetFailedLoginAttempts(user.id, client);
             await this.userRepository.updateLastLogin(user.id, client);
-            return await this.sessionRepository.create(user.id, expiresAt, isRememberMe, client);
+            return await this.sessionRepository.create({
+                user_id: user.id,
+                expires_at: expiresAt,
+                is_remember_me: isRememberMe,
+            }, client);
         });
 
         return {

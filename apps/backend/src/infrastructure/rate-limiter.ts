@@ -38,30 +38,4 @@ export class RateLimiter {
             next();
         };
     }
-
-    cleanup(): void {
-        const now = Date.now();
-        const maxWindow = 60 * 60 * 1000;
-
-        for (const [key, timestamps] of this.requests.entries()) {
-            const filtered = timestamps.filter(timestamp => timestamp > now - maxWindow);
-
-            if (filtered.length === 0) {
-                this.requests.delete(key);
-            } else {
-                this.requests.set(key, filtered);
-            }
-        }
-    }
-
-    getStats(): { totalKeys: number; totalRequests: number } {
-        let totalRequests = 0;
-        for (const timestamps of this.requests.values()) {
-            totalRequests += timestamps.length;
-        }
-        return {
-            totalKeys: this.requests.size,
-            totalRequests,
-        };
-    }
 }

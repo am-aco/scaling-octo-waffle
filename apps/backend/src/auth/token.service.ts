@@ -1,8 +1,9 @@
-import { UserRepository } from "./user.repository.js";
+import { UserRepository } from "../users/user.repository.js";
 import { RefreshTokenRepository } from "./refresh-token.repository.js";
 import { verifyPassword } from "./password.util.js";
 import { signAccessToken } from "./jwt.util.js";
 import { config } from "../infrastructure/config.js";
+import { AuthenticationError, ForbiddenError, NotFoundError, ValidationError } from "./auth.errors.js";
 
 export class TokenService {
     constructor(
@@ -19,17 +20,17 @@ export class TokenService {
         const user = await this.userRepository.findByEmail(email);
 
         if (!user) {
-            throw new Error("Invalid credentials");
+            throw new AuthenticationError("Invalid credentials");
         }
 
         if (!user.is_active) {
-            throw new Error("Account is inactive");
+            throw new ForbiddenError("Account is inactive");
         }
 
         const isPasswordValid = await verifyPassword(user.password_hash, password);
 
         if (!isPasswordValid) {
-            throw new Error("Invalid credentials");
+            throw new AuthenticationError("Invalid credentials");
         }
 
         /* Generate short-lived access token */
@@ -42,11 +43,11 @@ export class TokenService {
         const expiresAt = this.calculateRefreshTokenExpiry();
 
         /* Store refresh token in database */
-        const refreshTokenRecord = await this.refreshTokenRepository.create(
-            user.id,
-            tokenFamily,
-            expiresAt
-        );
+        const refreshTokenRecord = await this.refreshTokenRepository.create({
+            user_id: user.id,
+            token_family: tokenFamily,
+            expires_at: expiresAt,
+        });
 
         /* Update last login timestamp */
         await this.userRepository.updateLastLogin(user.id);
@@ -68,18 +69,18 @@ export class TokenService {
         const refreshToken = await this.refreshTokenRepository.findById(refreshTokenId);
 
         if (!refreshToken) {
-            throw new Error("Invalid or expired refresh token");
+            throw new AuthenticationError("Invalid or expired refresh token");
         }
 
         /* Load user to generate new access token */
         const user = await this.userRepository.findById(refreshToken.user_id);
 
         if (!user) {
-            throw new Error("User not found");
+            throw new NotFoundError("User not found");
         }
 
         if (!user.is_active) {
-            throw new Error("Account is inactive");
+            throw new ForbiddenError("Account is inactive");
         }
 
         /* Generate new access token */
@@ -113,7 +114,7 @@ export class TokenService {
                 case "m":
                     return new Date(now.getTime() + value * 60 * 1000);
                 default:
-                    throw new Error(`Unsupported time unit: ${unit}`);
+                    throw new ValidationError(`Unsupported time unit: ${unit}`);
             }
         }
 

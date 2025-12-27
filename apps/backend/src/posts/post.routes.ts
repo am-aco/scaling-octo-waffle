@@ -1,13 +1,19 @@
 import { Router } from "express";
 import { PostController } from "./post.controller.js";
-import { PostRepository } from "./post.repository.js";
+import type { PostRepository } from "./post.repository.js";
+import { PostService } from "./post.service.js";
 import { requireAuth } from "../auth/authentication.middleware.js";
-import { requireResourceOwnershipOrPermission } from "../auth/resource-ownership.middleware.js";
+import { requireOwnership } from "../auth/ownership.middleware.js";
 
-export function createPostRouter(): Router {
+interface PostRouterDependencies {
+    postRepository: PostRepository;
+}
+
+export function createPostRouter(deps: PostRouterDependencies): Router {
     const router = Router();
 
-    const postRepository = new PostRepository();
+    const { postRepository } = deps;
+    const postService = new PostService(postRepository);
     const postController = new PostController(postRepository);
 
     router.post("/", requireAuth, postController.createPost);
@@ -18,11 +24,8 @@ export function createPostRouter(): Router {
 
     router.put(
         "/:postId",
-        requireResourceOwnershipOrPermission({
-            getResourceOwnerId: async (req) => {
-                const post = await postRepository.findById(req.params.postId!);
-                return post?.user_id ?? null;
-            },
+        requireOwnership({
+            ownerId: async (req) => postService.getOwnerId(req.params.postId!),
             bypassPermission: "posts:moderate",
         }),
         postController.updatePost
@@ -30,11 +33,8 @@ export function createPostRouter(): Router {
 
     router.delete(
         "/:postId",
-        requireResourceOwnershipOrPermission({
-            getResourceOwnerId: async (req) => {
-                const post = await postRepository.findById(req.params.postId!);
-                return post?.user_id ?? null;
-            },
+        requireOwnership({
+            ownerId: async (req) => postService.getOwnerId(req.params.postId!),
             bypassPermission: "posts:moderate",
         }),
         postController.deletePost

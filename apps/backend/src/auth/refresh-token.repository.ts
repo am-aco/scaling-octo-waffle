@@ -10,12 +10,15 @@ export interface RefreshToken {
     revoked_at: Date | null;
 }
 
+export interface CreateRefreshTokenData {
+    user_id: string;
+    token_family: string;
+    expires_at: Date;
+}
+
 export class RefreshTokenRepository {
-    /* Create a new refresh token */
     async create(
-        userId: string,
-        tokenFamily: string,
-        expiresAt: Date,
+        data: CreateRefreshTokenData,
         client?: PoolClient
     ): Promise<RefreshToken> {
         const query = `
@@ -26,9 +29,9 @@ export class RefreshTokenRepository {
 
         const executor = client ?? pool;
         const result = await executor.query<RefreshToken>(query, [
-            userId,
-            tokenFamily,
-            expiresAt,
+            data.user_id,
+            data.token_family,
+            data.expires_at,
         ]);
 
         return result.rows[0]!;

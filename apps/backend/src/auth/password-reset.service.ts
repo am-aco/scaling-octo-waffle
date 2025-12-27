@@ -1,9 +1,10 @@
 import crypto from 'node:crypto';
 import argon2 from 'argon2';
 import { withTransaction } from '../infrastructure/database.js';
-import type { UserRepository } from './user.repository.js';
+import type { UserRepository } from '../users/user.repository.js';
 import type { PasswordResetTokenRepository } from './password-reset-token.repository.js';
 import type { SessionRepository } from './session.repository.js';
+import { ValidationError } from './auth.errors.js';
 
 const TOKEN_EXPIRATION_MS = 60 * 60 * 1000; /* 1 hour */
 
@@ -44,9 +45,9 @@ export class PasswordResetService {
 
             await this.resetTokenRepository.create(
                 {
-                    userId: user.id,
+                    user_id: user.id,
                     token,
-                    expiresAt,
+                    expires_at: expiresAt,
                 },
                 client,
             );
@@ -59,19 +60,19 @@ export class PasswordResetService {
         };
     }
 
-    async resetPassword(data: PasswordResetConfirmation): Promise<{ success: boolean; error?: string }> {
+    async resetPassword(data: PasswordResetConfirmation): Promise<void> {
         const resetToken = await this.resetTokenRepository.findByToken(data.token);
 
         if (!resetToken) {
-            return { success: false, error: 'Invalid or expired reset token' };
+            throw new ValidationError('Invalid or expired reset token');
         }
 
-        if (resetToken.usedAt) {
-            return { success: false, error: 'Reset token has already been used' };
+        if (resetToken.used_at) {
+            throw new ValidationError('Reset token has already been used');
         }
 
-        if (resetToken.expiresAt < new Date()) {
-            return { success: false, error: 'Reset token has expired' };
+        if (resetToken.expires_at < new Date()) {
+            throw new ValidationError('Reset token has expired');
         }
 
         const passwordHash = await argon2.hash(data.newPassword, {
@@ -82,14 +83,12 @@ export class PasswordResetService {
         });
 
         await withTransaction(async (client) => {
-            await this.userRepository.updatePassword(resetToken.userId, passwordHash, client);
+            await this.userRepository.updatePassword(resetToken.user_id, passwordHash, client);
 
             await this.resetTokenRepository.markAsUsed(data.token, client);
 
-            await this.sessionRepository.deleteAllForUser(resetToken.userId, client);
+            await this.sessionRepository.deleteAllForUser(resetToken.user_id, client);
         });
-
-        return { success: true };
     }
 
     private generateSecureToken(): string {
