@@ -3,7 +3,9 @@ import { RefreshTokenRepository } from "./refresh-token.repository.js";
 import { verifyPassword } from "./password.util.js";
 import { signAccessToken } from "./jwt.util.js";
 import { config } from "../infrastructure/config.js";
+import { withTransaction } from "../infrastructure/database.js";
 import { AuthenticationError, ForbiddenError, NotFoundError, ValidationError } from "./auth.errors.js";
+import { MAX_LOGIN_ATTEMPTS, LOCKOUT_DURATION_MS } from "./auth.constants.js";
 
 export class TokenService {
     constructor(
@@ -27,9 +29,32 @@ export class TokenService {
             throw new ForbiddenError("Account is inactive");
         }
 
+        const now = new Date();
+
+        if (user.locked_until && user.locked_until > now) {
+            const minutesRemaining = Math.ceil((user.locked_until.getTime() - now.getTime()) / 60000);
+            throw new ForbiddenError(
+                `Account is temporarily locked due to too many failed login attempts. Try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}.`
+            );
+        }
+
+        if (user.locked_until && user.locked_until <= now) {
+            await this.userRepository.resetFailedLoginAttempts(user.id);
+        }
+
         const isPasswordValid = await verifyPassword(user.password_hash, password);
 
         if (!isPasswordValid) {
+            await withTransaction(async (client) => {
+                await this.userRepository.incrementFailedLoginAttempts(user.id, client);
+
+                const updatedUser = await this.userRepository.findById(user.id);
+                if (updatedUser && updatedUser.failed_login_attempts >= MAX_LOGIN_ATTEMPTS) {
+                    const lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
+                    await this.userRepository.lockAccount(user.id, lockedUntil, client);
+                }
+            });
+
             throw new AuthenticationError("Invalid credentials");
         }
 
@@ -42,15 +67,17 @@ export class TokenService {
         /* Calculate refresh token expiration */
         const expiresAt = this.calculateRefreshTokenExpiry();
 
-        /* Store refresh token in database */
-        const refreshTokenRecord = await this.refreshTokenRepository.create({
-            user_id: user.id,
-            token_family: tokenFamily,
-            expires_at: expiresAt,
-        });
+        /* Store refresh token and update user in transaction */
+        const refreshTokenRecord = await withTransaction(async (client) => {
+            await this.userRepository.resetFailedLoginAttempts(user.id, client);
+            await this.userRepository.updateLastLogin(user.id, client);
 
-        /* Update last login timestamp */
-        await this.userRepository.updateLastLogin(user.id);
+            return await this.refreshTokenRepository.create({
+                user_id: user.id,
+                token_family: tokenFamily,
+                expires_at: expiresAt,
+            }, client);
+        });
 
         return {
             accessToken,

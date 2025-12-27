@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import { PostRepository } from "./post.repository.js";
+import { ValidationError, NotFoundError } from "../auth/auth.errors.js";
 
 export class PostController {
     constructor(private postRepository: PostRepository) { }
@@ -40,6 +41,10 @@ export class PostController {
             });
         }
         catch (error) {
+            if (error instanceof ValidationError) {
+                res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+                return;
+            }
             console.error("Create post error:", error);
             res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
@@ -54,6 +59,10 @@ export class PostController {
             });
         }
         catch (error) {
+            if (error instanceof ValidationError) {
+                res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+                return;
+            }
             console.error("Get all posts error:", error);
             res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
@@ -84,6 +93,14 @@ export class PostController {
             });
         }
         catch (error) {
+            if (error instanceof ValidationError) {
+                res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+                return;
+            }
+            if (error instanceof NotFoundError) {
+                res.status(HTTP_STATUS.NOT_FOUND).json({ error: error.message });
+                return;
+            }
             console.error("Get post by ID error:", error);
             res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
@@ -131,6 +148,14 @@ export class PostController {
             });
         }
         catch (error) {
+            if (error instanceof ValidationError) {
+                res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+                return;
+            }
+            if (error instanceof NotFoundError) {
+                res.status(HTTP_STATUS.NOT_FOUND).json({ error: error.message });
+                return;
+            }
             console.error("Update post error:", error);
             res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
@@ -161,6 +186,14 @@ export class PostController {
             });
         }
         catch (error) {
+            if (error instanceof ValidationError) {
+                res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+                return;
+            }
+            if (error instanceof NotFoundError) {
+                res.status(HTTP_STATUS.NOT_FOUND).json({ error: error.message });
+                return;
+            }
             console.error("Delete post error:", error);
             res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }

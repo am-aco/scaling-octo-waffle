@@ -1,21 +1,17 @@
 import type { Router, RequestHandler } from "express";
 import { Router as ExpressRouter } from "express";
 import { TokenController } from "./token.controller.js";
-import { TokenService } from "./token.service.js";
-import type { UserRepository } from "../users/user.repository.js";
-import type { RefreshTokenRepository } from "./refresh-token.repository.js";
+import type { TokenService } from "./token.service.js";
 
 interface TokenRouterDependencies {
-    userRepository: UserRepository;
-    refreshTokenRepository: RefreshTokenRepository;
+    tokenService: TokenService;
     rateLimit?: RequestHandler;
 }
 
 export function createTokenRouter(deps: TokenRouterDependencies): Router {
     const router = ExpressRouter();
 
-    const tokenService = new TokenService(deps.userRepository, deps.refreshTokenRepository);
-    const tokenController = new TokenController(tokenService);
+    const tokenController = new TokenController(deps.tokenService);
 
     const loginMiddleware = deps.rateLimit
         ? [deps.rateLimit, tokenController.login]

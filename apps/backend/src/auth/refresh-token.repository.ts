@@ -61,30 +61,4 @@ export class RefreshTokenRepository {
         const executor = client ?? pool;
         await executor.query(query, [tokenId]);
     }
-
-    /* Revoke all refresh tokens for a user */
-    async revokeAllForUser(userId: string, client?: PoolClient): Promise<void> {
-        const query = `
-            UPDATE refresh_tokens
-            SET revoked_at = NOW()
-            WHERE user_id = $1
-                AND revoked_at IS NULL
-        `;
-
-        const executor = client ?? pool;
-        await executor.query(query, [userId]);
-    }
-
-    /* Revoke all tokens in a token family (for token rotation security) */
-    async revokeTokenFamily(tokenFamily: string, client?: PoolClient): Promise<void> {
-        const query = `
-            UPDATE refresh_tokens
-            SET revoked_at = NOW()
-            WHERE token_family = $1
-                AND revoked_at IS NULL
-        `;
-
-        const executor = client ?? pool;
-        await executor.query(query, [tokenFamily]);
-    }
 }

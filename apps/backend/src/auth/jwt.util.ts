@@ -1,5 +1,8 @@
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import { config } from "../infrastructure/config.js";
+import { AuthenticationError } from "./auth.errors.js";
+
+type ExpiresIn = Exclude<SignOptions["expiresIn"], undefined>;
 
 /* JWT payload structure with standard claims */
 export interface JwtPayload {
@@ -14,7 +17,7 @@ export function signToken(userId: string, email: string): string {
     return jwt.sign(
         { sub: userId, email },
         config.jwt.secret,
-        { expiresIn: config.jwt.expiresIn as any }
+        { expiresIn: config.jwt.expiresIn as ExpiresIn }
     );
 }
 
@@ -23,7 +26,7 @@ export function signAccessToken(userId: string, email: string): string {
     return jwt.sign(
         { sub: userId, email },
         config.jwt.secret,
-        { expiresIn: config.jwt.accessTokenExpiresIn as any }
+        { expiresIn: config.jwt.accessTokenExpiresIn as ExpiresIn }
     );
 }
 
@@ -34,10 +37,10 @@ export function verifyToken(token: string): JwtPayload {
         return decoded as JwtPayload;
     } catch (error) {
         if (error instanceof jwt.TokenExpiredError) {
-            throw new Error("Token has expired");
+            throw new AuthenticationError("Token has expired");
         }
         if (error instanceof jwt.JsonWebTokenError) {
-            throw new Error("Invalid token");
+            throw new AuthenticationError("Invalid token");
         }
         throw error;
     }

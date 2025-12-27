@@ -21,9 +21,9 @@ export class EmailVerificationTokenRepository {
         data: CreateEmailVerificationTokenData,
         client?: PoolClient,
     ): Promise<EmailVerificationToken> {
-        const db = client ?? pool;
+        const executor = client ?? pool;
 
-        const result = await db.query<EmailVerificationToken>(
+        const result = await executor.query<EmailVerificationToken>(
             `INSERT INTO email_verification_tokens (user_id, token, expires_at)
              VALUES ($1, $2, $3)
              RETURNING id, user_id, token, created_at, expires_at, used_at`,
@@ -45,9 +45,9 @@ export class EmailVerificationTokenRepository {
     }
 
     async markAsUsed(token: string, client?: PoolClient): Promise<boolean> {
-        const db = client ?? pool;
+        const executor = client ?? pool;
 
-        const result = await db.query(
+        const result = await executor.query(
             `UPDATE email_verification_tokens
              SET used_at = NOW()
              WHERE token = $1 AND used_at IS NULL`,
@@ -58,21 +58,12 @@ export class EmailVerificationTokenRepository {
     }
 
     async deleteUnusedByUserId(userId: string, client?: PoolClient): Promise<void> {
-        const db = client ?? pool;
+        const executor = client ?? pool;
 
-        await db.query(
+        await executor.query(
             `DELETE FROM email_verification_tokens
              WHERE user_id = $1 AND used_at IS NULL`,
             [userId],
         );
-    }
-
-    async deleteExpired(): Promise<number> {
-        const result = await pool.query(
-            `DELETE FROM email_verification_tokens
-             WHERE expires_at < NOW()`,
-        );
-
-        return result.rowCount ?? 0;
     }
 }

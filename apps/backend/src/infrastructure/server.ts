@@ -13,6 +13,9 @@ import { PasswordResetTokenRepository } from "../auth/password-reset-token.repos
 import { PasswordResetService } from "../auth/password-reset.service.js";
 import { EmailVerificationTokenRepository } from "../auth/email-verification-token.repository.js";
 import { EmailVerificationService } from "../auth/email-verification.service.js";
+import { AuthenticationService } from "../auth/authentication.service.js";
+import { JwtService } from "../auth/jwt.service.js";
+import { TokenService } from "../auth/token.service.js";
 import { UserRepository } from "../users/user.repository.js";
 import { createUserRouter } from "../users/user.routes.js";
 import { PostRepository } from "../posts/post.repository.js";
@@ -39,6 +42,15 @@ export function createServer(): Express {
 
     /* Shared service instances */
     const emailService = new EmailService('http://localhost:3000');
+    const authenticationService = new AuthenticationService(
+        userRepository,
+        sessionRepository,
+    );
+    const jwtService = new JwtService(userRepository);
+    const tokenService = new TokenService(
+        userRepository,
+        refreshTokenRepository,
+    );
     const passwordResetService = new PasswordResetService(
         userRepository,
         passwordResetTokenRepository,
@@ -86,8 +98,7 @@ export function createServer(): Express {
 
     /* Mount authentication routes at /auth */
     app.use("/auth", createAuthenticationRouter({
-        userRepository,
-        sessionRepository,
+        authenticationService,
         loginRateLimit,
         registerRateLimit,
         csrfProtection,
@@ -95,14 +106,13 @@ export function createServer(): Express {
 
     /* Mount JWT authentication routes at /auth/jwt */
     app.use("/auth/jwt", createJwtRouter({
-        userRepository,
+        jwtService,
         rateLimit: loginRateLimit,
     }));
 
     /* Mount refresh token routes at /auth/token */
     app.use("/auth/token", createTokenRouter({
-        userRepository,
-        refreshTokenRepository,
+        tokenService,
         rateLimit: loginRateLimit,
     }));
 

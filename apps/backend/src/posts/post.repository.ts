@@ -88,17 +88,6 @@ export class PostRepository {
         return result.rows;
     }
 
-    async findByUserId(userId: string): Promise<Post[]> {
-        const result = await pool.query<Post>(
-            `SELECT * FROM posts
-             WHERE user_id = $1
-             ORDER BY created_at DESC`,
-            [userId]
-        );
-
-        return result.rows;
-    }
-
     async update(postId: string, updates: UpdatePostData): Promise<Post | null> {
         const fields: string[] = [];
         const values: unknown[] = [];

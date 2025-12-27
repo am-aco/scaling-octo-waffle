@@ -1,15 +1,12 @@
 import type { Router, RequestHandler } from "express";
 import { Router as ExpressRouter } from "express";
 import { AuthenticationController } from "./authentication.controller.js";
-import { AuthenticationService } from "./authentication.service.js";
-import type { UserRepository } from "../users/user.repository.js";
-import type { SessionRepository } from "./session.repository.js";
+import type { AuthenticationService } from "./authentication.service.js";
 import { requireAuth } from "./authentication.middleware.js";
 import type { CsrfProtection } from "../infrastructure/csrf.js";
 
 interface AuthenticationRouterDependencies {
-    userRepository: UserRepository;
-    sessionRepository: SessionRepository;
+    authenticationService: AuthenticationService;
     loginRateLimit?: RequestHandler;
     registerRateLimit?: RequestHandler;
     csrfProtection?: CsrfProtection;
@@ -18,8 +15,7 @@ interface AuthenticationRouterDependencies {
 export function createAuthenticationRouter(deps: AuthenticationRouterDependencies): Router {
     const router = ExpressRouter();
 
-    const authenticationService = new AuthenticationService(deps.userRepository, deps.sessionRepository);
-    const authenticationController = new AuthenticationController(authenticationService, deps.csrfProtection);
+    const authenticationController = new AuthenticationController(deps.authenticationService, deps.csrfProtection);
 
     const registerMiddleware = deps.registerRateLimit
         ? [deps.registerRateLimit, authenticationController.register]

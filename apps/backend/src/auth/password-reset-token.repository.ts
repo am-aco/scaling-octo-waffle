@@ -21,9 +21,9 @@ export class PasswordResetTokenRepository {
         data: CreatePasswordResetTokenData,
         client?: PoolClient,
     ): Promise<PasswordResetToken> {
-        const db = client ?? pool;
+        const executor = client ?? pool;
 
-        const result = await db.query<PasswordResetToken>(
+        const result = await executor.query<PasswordResetToken>(
             `INSERT INTO password_reset_tokens (user_id, token, expires_at)
              VALUES ($1, $2, $3)
              RETURNING id, user_id, token, created_at, expires_at, used_at`,
@@ -45,9 +45,9 @@ export class PasswordResetTokenRepository {
     }
 
     async markAsUsed(token: string, client?: PoolClient): Promise<boolean> {
-        const db = client ?? pool;
+        const executor = client ?? pool;
 
-        const result = await db.query(
+        const result = await executor.query(
             `UPDATE password_reset_tokens
              SET used_at = NOW()
              WHERE token = $1 AND used_at IS NULL`,
@@ -58,21 +58,12 @@ export class PasswordResetTokenRepository {
     }
 
     async deleteUnusedByUserId(userId: string, client?: PoolClient): Promise<void> {
-        const db = client ?? pool;
+        const executor = client ?? pool;
 
-        await db.query(
+        await executor.query(
             `DELETE FROM password_reset_tokens
              WHERE user_id = $1 AND used_at IS NULL`,
             [userId],
         );
-    }
-
-    async deleteExpired(): Promise<number> {
-        const result = await pool.query(
-            `DELETE FROM password_reset_tokens
-             WHERE expires_at < NOW()`,
-        );
-
-        return result.rowCount ?? 0;
     }
 }

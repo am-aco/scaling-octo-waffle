@@ -1,10 +1,10 @@
-import crypto from 'node:crypto';
-import argon2 from 'argon2';
 import { withTransaction } from '../infrastructure/database.js';
 import type { UserRepository } from '../users/user.repository.js';
 import type { PasswordResetTokenRepository } from './password-reset-token.repository.js';
 import type { SessionRepository } from './session.repository.js';
 import { ValidationError } from './auth.errors.js';
+import { hashPassword } from './password.util.js';
+import { generateSecureToken } from './token.util.js';
 
 const TOKEN_EXPIRATION_MS = 60 * 60 * 1000; /* 1 hour */
 
@@ -37,7 +37,7 @@ export class PasswordResetService {
             return { success: true };
         }
 
-        const token = this.generateSecureToken();
+        const token = generateSecureToken();
         const expiresAt = new Date(Date.now() + TOKEN_EXPIRATION_MS);
 
         await withTransaction(async (client) => {
@@ -75,12 +75,7 @@ export class PasswordResetService {
             throw new ValidationError('Reset token has expired');
         }
 
-        const passwordHash = await argon2.hash(data.newPassword, {
-            type: argon2.argon2id,
-            memoryCost: 19456,
-            timeCost: 2,
-            parallelism: 1,
-        });
+        const passwordHash = await hashPassword(data.newPassword);
 
         await withTransaction(async (client) => {
             await this.userRepository.updatePassword(resetToken.user_id, passwordHash, client);
@@ -89,9 +84,5 @@ export class PasswordResetService {
 
             await this.sessionRepository.deleteAllForUser(resetToken.user_id, client);
         });
-    }
-
-    private generateSecureToken(): string {
-        return crypto.randomBytes(32).toString('base64url');
     }
 }

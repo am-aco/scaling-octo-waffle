@@ -1,8 +1,8 @@
-import crypto from 'node:crypto';
 import { withTransaction } from '../infrastructure/database.js';
 import type { UserRepository } from '../users/user.repository.js';
 import type { EmailVerificationTokenRepository } from './email-verification-token.repository.js';
 import { ValidationError } from './auth.errors.js';
+import { generateSecureToken } from './token.util.js';
 
 const TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000; /* 24 hours */
 
@@ -22,7 +22,7 @@ export class EmailVerificationService {
     ) {}
 
     async generateVerificationToken(data: SendVerificationEmailData): Promise<string> {
-        const token = this.generateSecureToken();
+        const token = generateSecureToken();
         const expiresAt = new Date(Date.now() + TOKEN_EXPIRATION_MS);
 
         await withTransaction(async (client) => {
@@ -61,9 +61,5 @@ export class EmailVerificationService {
 
             await this.verificationTokenRepository.markAsUsed(data.token, client);
         });
-    }
-
-    private generateSecureToken(): string {
-        return crypto.randomBytes(32).toString('base64url');
     }
 }
