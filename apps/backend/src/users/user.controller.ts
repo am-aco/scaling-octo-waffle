@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import type { UserService } from "./user.service.js";
-import { ValidationError, ConflictError } from "../infrastructure/errors.js";
+import { handleControllerError } from "../infrastructure/error-handler.util.js";
 
 export class UserController {
     constructor(private userService: UserService) {}
@@ -31,8 +31,7 @@ export class UserController {
             });
         }
         catch (error) {
-            console.error("Get user by ID error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+            handleControllerError(error, res, "Get user by ID error");
         }
     };
 
@@ -45,8 +44,7 @@ export class UserController {
             });
         }
         catch (error) {
-            console.error("Get all users error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+            handleControllerError(error, res, "Get all users error");
         }
     };
 
@@ -78,18 +76,7 @@ export class UserController {
             });
         }
         catch (error) {
-            if (error instanceof ValidationError) {
-                res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
-                return;
-            }
-
-            if (error instanceof ConflictError) {
-                res.status(HTTP_STATUS.CONFLICT).json({ error: error.message });
-                return;
-            }
-
-            console.error("Create user error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+            handleControllerError(error, res, "Create user error");
         }
     };
 
@@ -137,18 +124,7 @@ export class UserController {
             });
         }
         catch (error) {
-            if (error instanceof ValidationError) {
-                res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
-                return;
-            }
-
-            if (error instanceof ConflictError) {
-                res.status(HTTP_STATUS.CONFLICT).json({ error: error.message });
-                return;
-            }
-
-            console.error("Update user error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+            handleControllerError(error, res, "Update user error");
         }
     };
 
@@ -177,8 +153,7 @@ export class UserController {
             });
         }
         catch (error) {
-            console.error("Delete user error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+            handleControllerError(error, res, "Delete user error");
         }
     };
 }
