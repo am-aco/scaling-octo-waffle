@@ -1,9 +1,10 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import { UserController } from "./user.controller.js";
 import type { UserService } from "./user.service.js";
+import type { OwnershipConfig } from "../auth/ownership.middleware.js";
 
-type RequirePermission = (permission: string) => import("express").RequestHandler;
-type RequireOwnership = (config: import("../auth/ownership.middleware.js").OwnershipConfig) => import("express").RequestHandler;
+type RequirePermission = (permission: string) => RequestHandler;
+type RequireOwnership = (config: OwnershipConfig) => RequestHandler;
 
 interface UserRouterDependencies {
     userService: UserService;

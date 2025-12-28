@@ -1,9 +1,10 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import { PostController } from "./post.controller.js";
 import type { PostService } from "./post.service.js";
 import { requireAuth } from "../auth/authentication.middleware.js";
+import type { OwnershipConfig } from "../auth/ownership.middleware.js";
 
-type RequireOwnership = (config: import("../auth/ownership.middleware.js").OwnershipConfig) => import("express").RequestHandler;
+type RequireOwnership = (config: OwnershipConfig) => RequestHandler;
 
 interface PostRouterDependencies {
     postService: PostService;
