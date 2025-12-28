@@ -114,7 +114,7 @@ export class SessionRepository {
         };
     }
 
-    async delete(sessionId: string, client?: PoolClient): Promise<void> {
+    async deleteById(sessionId: string, client?: PoolClient): Promise<void> {
         const query = "DELETE FROM sessions WHERE id = $1";
         const executor = client ?? pool;
         await executor.query(query, [sessionId]);

@@ -1,12 +1,11 @@
 import type { Request, Response } from "express";
 import { JwtService } from "./jwt.service.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
-import { AuthenticationError, ForbiddenError } from "../infrastructure/errors.js";
+import { handleControllerError } from "../infrastructure/error-handler.util.js";
 
 export class JwtController {
     constructor(private jwtService: JwtService) {}
 
-    /* JWT login endpoint */
     login = async (req: Request, res: Response): Promise<void> => {
         try {
             const { email, password } = req.body;
@@ -23,24 +22,7 @@ export class JwtController {
             res.status(HTTP_STATUS.OK).json(result);
         }
         catch (error) {
-            if (error instanceof AuthenticationError) {
-                res.status(HTTP_STATUS.UNAUTHORIZED).json({
-                    error: error.message,
-                });
-                return;
-            }
-
-            if (error instanceof ForbiddenError) {
-                res.status(HTTP_STATUS.FORBIDDEN).json({
-                    error: error.message,
-                });
-                return;
-            }
-
-            console.error("JWT login error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-                error: "Internal server error",
-            });
+            handleControllerError(error, res, "JWT login error");
         }
     };
 }

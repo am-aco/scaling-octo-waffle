@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { EmailVerificationService } from "./email-verification.service.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
-import { ValidationError } from "../infrastructure/errors.js";
+import { handleControllerError } from "../infrastructure/error-handler.util.js";
 import { isValidEmail } from "./validation.util.js";
 
 export class EmailVerificationController {
@@ -24,16 +24,7 @@ export class EmailVerificationController {
                 message: "Email verified successfully",
             });
         } catch (error) {
-            if (error instanceof ValidationError) {
-                res.status(HTTP_STATUS.BAD_REQUEST).json({
-                    error: error.message,
-                });
-                return;
-            }
-            console.error("Email verification error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-                error: "Internal server error",
-            });
+            handleControllerError(error, res, "Email verification error");
         }
     };
 
@@ -68,10 +59,7 @@ export class EmailVerificationController {
                 message: "If an account exists with this email, a verification link has been sent",
             });
         } catch (error) {
-            console.error("Resend verification error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-                error: "Internal server error",
-            });
+            handleControllerError(error, res, "Resend verification error");
         }
     };
 }

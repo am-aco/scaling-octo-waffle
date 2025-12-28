@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { HTTP_STATUS } from "../infrastructure/http.js";
-import { AuthorizationService } from "./authorization.service.js";
+import type { AuthorizationService } from "./authorization.service.js";
 
 type OwnerIdResolver = string | ((req: Request) => Promise<string | null>);
 
@@ -13,10 +13,9 @@ function isParamName(resolver: OwnerIdResolver): resolver is string {
     return typeof resolver === "string";
 }
 
-export function requireOwnership(config: OwnershipConfig) {
-    const authzService = new AuthorizationService();
-
-    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export function createRequireOwnership(authzService: AuthorizationService) {
+    return function requireOwnership(config: OwnershipConfig) {
+        return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         if (!req.user) {
             res.status(HTTP_STATUS.UNAUTHORIZED).json({
                 error: "Authentication required",
@@ -69,5 +68,6 @@ export function requireOwnership(config: OwnershipConfig) {
             error: "Access denied",
             reason: "You can only access your own resources",
         });
+        };
     };
 }

@@ -100,6 +100,6 @@ export class AuthenticationService {
     }
 
     async logout(sessionId: string): Promise<void> {
-        await this.sessionRepository.delete(sessionId);
+        await this.sessionRepository.deleteById(sessionId);
     }
 }

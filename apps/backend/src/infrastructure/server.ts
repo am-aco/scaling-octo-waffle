@@ -14,6 +14,9 @@ import { PasswordResetService } from "../auth/password-reset.service.js";
 import { EmailVerificationTokenRepository } from "../auth/email-verification-token.repository.js";
 import { EmailVerificationService } from "../auth/email-verification.service.js";
 import { AuthenticationService } from "../auth/authentication.service.js";
+import { AuthorizationService } from "../auth/authorization.service.js";
+import { createRequirePermission } from "../auth/authorization.middleware.js";
+import { createRequireOwnership } from "../auth/ownership.middleware.js";
 import { JwtService } from "../auth/jwt.service.js";
 import { TokenService } from "../auth/token.service.js";
 import { UserRepository } from "../users/user.repository.js";
@@ -66,6 +69,11 @@ export function createServer(): Express {
     );
     const userService = new UserService(userRepository);
     const postService = new PostService(postRepository);
+    const authorizationService = new AuthorizationService();
+
+    /* Authorization middleware factories */
+    const requirePermission = createRequirePermission(authorizationService);
+    const requireOwnership = createRequireOwnership(authorizationService);
 
     /* Rate limiter instance */
     const rateLimiter = new RateLimiter();
@@ -135,10 +143,17 @@ export function createServer(): Express {
     }));
 
     /* Mount user management routes at /users */
-    app.use("/users", createUserRouter({ userService }));
+    app.use("/users", createUserRouter({
+        userService,
+        requirePermission,
+        requireOwnership,
+    }));
 
     /* Mount posts routes at /posts */
-    app.use("/posts", createPostRouter({ postService }));
+    app.use("/posts", createPostRouter({
+        postService,
+        requireOwnership,
+    }));
 
     return app;
 }

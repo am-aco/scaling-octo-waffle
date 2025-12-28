@@ -1,17 +1,21 @@
 import { Router } from "express";
 import { UserController } from "./user.controller.js";
 import type { UserService } from "./user.service.js";
-import { requirePermission } from "../auth/authorization.middleware.js";
-import { requireOwnership } from "../auth/ownership.middleware.js";
+
+type RequirePermission = (permission: string) => import("express").RequestHandler;
+type RequireOwnership = (config: import("../auth/ownership.middleware.js").OwnershipConfig) => import("express").RequestHandler;
 
 interface UserRouterDependencies {
     userService: UserService;
+    requirePermission: RequirePermission;
+    requireOwnership: RequireOwnership;
 }
 
 export function createUserRouter(deps: UserRouterDependencies): Router {
     const router = Router();
 
     const userController = new UserController(deps.userService);
+    const { requirePermission, requireOwnership } = deps;
 
     router.post("/", requirePermission("users:create"), userController.createUser);
 

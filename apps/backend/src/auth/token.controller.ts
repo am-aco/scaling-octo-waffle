@@ -1,12 +1,11 @@
 import type { Request, Response } from "express";
 import { TokenService } from "./token.service.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
-import { AuthenticationError, ForbiddenError, NotFoundError } from "../infrastructure/errors.js";
+import { handleControllerError } from "../infrastructure/error-handler.util.js";
 
 export class TokenController {
     constructor(private tokenService: TokenService) {}
 
-    /* Login endpoint - returns access token + refresh token */
     login = async (req: Request, res: Response): Promise<void> => {
         try {
             const { email, password } = req.body;
@@ -23,28 +22,10 @@ export class TokenController {
             res.status(HTTP_STATUS.OK).json(result);
         }
         catch (error) {
-            if (error instanceof AuthenticationError) {
-                res.status(HTTP_STATUS.UNAUTHORIZED).json({
-                    error: error.message,
-                });
-                return;
-            }
-
-            if (error instanceof ForbiddenError) {
-                res.status(HTTP_STATUS.FORBIDDEN).json({
-                    error: error.message,
-                });
-                return;
-            }
-
-            console.error("Token login error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-                error: "Internal server error",
-            });
+            handleControllerError(error, res, "Token login error");
         }
     };
 
-    /* Refresh endpoint - exchange refresh token for new access token */
     refresh = async (req: Request, res: Response): Promise<void> => {
         try {
             const { refreshToken } = req.body;
@@ -61,35 +42,10 @@ export class TokenController {
             res.status(HTTP_STATUS.OK).json(result);
         }
         catch (error) {
-            if (error instanceof AuthenticationError) {
-                res.status(HTTP_STATUS.UNAUTHORIZED).json({
-                    error: error.message,
-                });
-                return;
-            }
-
-            if (error instanceof NotFoundError) {
-                res.status(HTTP_STATUS.NOT_FOUND).json({
-                    error: error.message,
-                });
-                return;
-            }
-
-            if (error instanceof ForbiddenError) {
-                res.status(HTTP_STATUS.FORBIDDEN).json({
-                    error: error.message,
-                });
-                return;
-            }
-
-            console.error("Token refresh error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-                error: "Internal server error",
-            });
+            handleControllerError(error, res, "Token refresh error");
         }
     };
 
-    /* Logout endpoint - revoke refresh token */
     logout = async (req: Request, res: Response): Promise<void> => {
         try {
             const { refreshToken } = req.body;
@@ -108,10 +64,7 @@ export class TokenController {
             });
         }
         catch (error) {
-            console.error("Token logout error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-                error: "Internal server error",
-            });
+            handleControllerError(error, res, "Token logout error");
         }
     };
 }

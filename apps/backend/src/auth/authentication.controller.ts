@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { AuthenticationService } from "./authentication.service.js";
-import { ValidationError, ConflictError, AuthenticationError, ForbiddenError } from "../infrastructure/errors.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
+import { handleControllerError } from "../infrastructure/error-handler.util.js";
 import { COOKIE_OPTIONS, REMEMBER_ME_DURATION_MS } from "./auth.constants.js";
 import type { CsrfProtection } from "../infrastructure/csrf.js";
 
@@ -35,25 +35,10 @@ export class AuthenticationController {
             });
         }
         catch (error) {
-            if (error instanceof ValidationError) {
-                res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
-                return;
-            }
-
-            if (error instanceof ConflictError) {
-                res.status(HTTP_STATUS.CONFLICT).json({ error: error.message });
-                return;
-            }
-
-            console.error("Registration error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+            handleControllerError(error, res, "Registration error");
         }
     };
 
-    /*
-     * Handle POST /auth/login
-     * Authenticates user and creates session
-     */
     login = async (req: Request, res: Response): Promise<void> => {
         try {
             const { email, password, rememberMe } = req.body;
@@ -91,25 +76,10 @@ export class AuthenticationController {
             });
         }
         catch (error) {
-            if (error instanceof AuthenticationError) {
-                res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: error.message });
-                return;
-            }
-
-            if (error instanceof ForbiddenError) {
-                res.status(HTTP_STATUS.FORBIDDEN).json({ error: error.message });
-                return;
-            }
-
-            console.error("Login error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+            handleControllerError(error, res, "Login error");
         }
     };
 
-    /*
-     * Handle POST /auth/logout
-     * Invalidates session and clears cookie
-     */
     logout = async (req: Request, res: Response): Promise<void> => {
         try {
             const sessionId = req.cookies.sessionId;
@@ -125,16 +95,11 @@ export class AuthenticationController {
             });
         }
         catch (error) {
-            console.error("Logout error:", error);
-            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+            handleControllerError(error, res, "Logout error");
         }
     };
 
-    /** 
-     * Handle GET /auth/profile
-     * Returns the authenticated user's profile
-     */
-    getProfile = (req: Request, res: Response): void => {
+    getProfile = async (req: Request, res: Response): Promise<void> => {
         res.status(HTTP_STATUS.OK).json({
             user: req.user,
         });
