@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { AuthenticationService } from "./authentication.service.js";
-import { ValidationError, ConflictError, AuthenticationError, ForbiddenError } from "./auth.errors.js";
+import { ValidationError, ConflictError, AuthenticationError, ForbiddenError } from "../infrastructure/errors.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import { COOKIE_OPTIONS, REMEMBER_ME_DURATION_MS } from "./auth.constants.js";
 import type { CsrfProtection } from "../infrastructure/csrf.js";

@@ -57,10 +57,12 @@ export function createServer(): Express {
         userRepository,
         passwordResetTokenRepository,
         sessionRepository,
+        emailService,
     );
     const emailVerificationService = new EmailVerificationService(
         userRepository,
         emailVerificationTokenRepository,
+        emailService,
     );
     const userService = new UserService(userRepository);
     const postService = new PostService(postRepository);
@@ -123,14 +125,12 @@ export function createServer(): Express {
     /* Mount password reset routes at /auth/password-reset */
     app.use("/auth/password-reset", createPasswordResetRouter({
         passwordResetService,
-        emailService,
         rateLimit: passwordResetRateLimit,
     }));
 
     /* Mount email verification routes at /auth/email-verification */
     app.use("/auth/email-verification", createEmailVerificationRouter({
         emailVerificationService,
-        emailService,
         rateLimit: emailVerificationRateLimit,
     }));
 

@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { TokenService } from "./token.service.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
-import { AuthenticationError, ForbiddenError, NotFoundError } from "./auth.errors.js";
+import { AuthenticationError, ForbiddenError, NotFoundError } from "../infrastructure/errors.js";
 
 export class TokenController {
     constructor(private tokenService: TokenService) {}

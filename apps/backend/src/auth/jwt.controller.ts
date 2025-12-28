@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { JwtService } from "./jwt.service.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
-import { AuthenticationError, ForbiddenError } from "./auth.errors.js";
+import { AuthenticationError, ForbiddenError } from "../infrastructure/errors.js";
 
 export class JwtController {
     constructor(private jwtService: JwtService) {}

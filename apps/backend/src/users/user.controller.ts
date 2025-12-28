@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import type { UserService } from "./user.service.js";
-import { ValidationError, ConflictError } from "../auth/auth.errors.js";
+import { ValidationError, ConflictError } from "../infrastructure/errors.js";
 
 export class UserController {
     constructor(private userService: UserService) {}

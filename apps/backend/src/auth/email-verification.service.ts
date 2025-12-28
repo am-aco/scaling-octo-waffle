@@ -1,7 +1,8 @@
 import { withTransaction } from '../infrastructure/database.js';
 import type { UserRepository } from '../users/user.repository.js';
 import type { EmailVerificationTokenRepository } from './email-verification-token.repository.js';
-import { ValidationError } from './auth.errors.js';
+import type { EmailService } from '../infrastructure/email.service.js';
+import { ValidationError } from '../infrastructure/errors.js';
 import { generateSecureToken } from './token.util.js';
 
 const TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000; /* 24 hours */
@@ -20,16 +21,14 @@ export interface ResendVerificationData {
 }
 
 export interface ResendVerificationResult {
-    success: boolean;
-    token?: string;
-    email?: string;
-    alreadyVerified?: boolean;
+    alreadyVerified: boolean;
 }
 
 export class EmailVerificationService {
     constructor(
         private userRepository: UserRepository,
         private verificationTokenRepository: EmailVerificationTokenRepository,
+        private emailService: EmailService,
     ) {}
 
     async generateVerificationToken(data: SendVerificationEmailData): Promise<string> {
@@ -78,11 +77,11 @@ export class EmailVerificationService {
         const user = await this.userRepository.findByEmail(data.email);
 
         if (!user) {
-            return { success: true };
+            return { alreadyVerified: false };
         }
 
         if (user.email_verified) {
-            return { success: false, alreadyVerified: true };
+            return { alreadyVerified: true };
         }
 
         const token = await this.generateVerificationToken({
@@ -90,10 +89,11 @@ export class EmailVerificationService {
             email: user.email,
         });
 
-        return {
-            success: true,
-            token,
-            email: user.email,
-        };
+        await this.emailService.sendEmailVerification({
+            to: user.email,
+            verificationToken: token,
+        });
+
+        return { alreadyVerified: false };
     }
 }

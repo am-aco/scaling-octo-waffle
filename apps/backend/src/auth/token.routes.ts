@@ -1,5 +1,4 @@
-import type { Router, RequestHandler } from "express";
-import { Router as ExpressRouter } from "express";
+import { Router, type RequestHandler } from "express";
 import { TokenController } from "./token.controller.js";
 import type { TokenService } from "./token.service.js";
 
@@ -9,7 +8,7 @@ interface TokenRouterDependencies {
 }
 
 export function createTokenRouter(deps: TokenRouterDependencies): Router {
-    const router = ExpressRouter();
+    const router = Router();
 
     const tokenController = new TokenController(deps.tokenService);
 

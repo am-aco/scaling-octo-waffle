@@ -1,15 +1,11 @@
 import type { Request, Response } from "express";
 import type { EmailVerificationService } from "./email-verification.service.js";
-import type { EmailService } from "../infrastructure/email.service.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
-import { ValidationError } from "./auth.errors.js";
+import { ValidationError } from "../infrastructure/errors.js";
 import { isValidEmail } from "./validation.util.js";
 
 export class EmailVerificationController {
-    constructor(
-        private emailVerificationService: EmailVerificationService,
-        private emailService: EmailService,
-    ) {}
+    constructor(private emailVerificationService: EmailVerificationService) {}
 
     verify = async (req: Request, res: Response): Promise<void> => {
         try {
@@ -66,13 +62,6 @@ export class EmailVerificationController {
                     error: "Email is already verified",
                 });
                 return;
-            }
-
-            if (result.token && result.email) {
-                await this.emailService.sendEmailVerification({
-                    to: result.email,
-                    verificationToken: result.token,
-                });
             }
 
             res.status(HTTP_STATUS.OK).json({

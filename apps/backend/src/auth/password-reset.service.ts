@@ -2,7 +2,8 @@ import { withTransaction } from '../infrastructure/database.js';
 import type { UserRepository } from '../users/user.repository.js';
 import type { PasswordResetTokenRepository } from './password-reset-token.repository.js';
 import type { SessionRepository } from './session.repository.js';
-import { ValidationError } from './auth.errors.js';
+import type { EmailService } from '../infrastructure/email.service.js';
+import { ValidationError } from '../infrastructure/errors.js';
 import { hashPassword } from './password.util.js';
 import { generateSecureToken } from './token.util.js';
 
@@ -17,24 +18,19 @@ export interface PasswordResetConfirmation {
     newPassword: string;
 }
 
-export interface PasswordResetResult {
-    success: boolean;
-    token?: string;
-    email?: string;
-}
-
 export class PasswordResetService {
     constructor(
         private userRepository: UserRepository,
         private resetTokenRepository: PasswordResetTokenRepository,
         private sessionRepository: SessionRepository,
+        private emailService: EmailService,
     ) {}
 
-    async requestPasswordReset(data: PasswordResetRequest): Promise<PasswordResetResult> {
+    async requestPasswordReset(data: PasswordResetRequest): Promise<void> {
         const user = await this.userRepository.findByEmail(data.email);
 
         if (!user) {
-            return { success: true };
+            return;
         }
 
         const token = generateSecureToken();
@@ -53,11 +49,10 @@ export class PasswordResetService {
             );
         });
 
-        return {
-            success: true,
-            token,
-            email: user.email,
-        };
+        await this.emailService.sendPasswordResetEmail({
+            to: user.email,
+            resetToken: token,
+        });
     }
 
     async resetPassword(data: PasswordResetConfirmation): Promise<void> {

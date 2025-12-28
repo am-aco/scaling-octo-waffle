@@ -1,5 +1,4 @@
-import type { Router, RequestHandler } from "express";
-import { Router as ExpressRouter } from "express";
+import { Router, type RequestHandler } from "express";
 import { AuthenticationController } from "./authentication.controller.js";
 import type { AuthenticationService } from "./authentication.service.js";
 import { requireAuth } from "./authentication.middleware.js";
@@ -13,7 +12,7 @@ interface AuthenticationRouterDependencies {
 }
 
 export function createAuthenticationRouter(deps: AuthenticationRouterDependencies): Router {
-    const router = ExpressRouter();
+    const router = Router();
 
     const authenticationController = new AuthenticationController(deps.authenticationService, deps.csrfProtection);
 

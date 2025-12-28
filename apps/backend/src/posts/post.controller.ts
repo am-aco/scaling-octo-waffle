@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import type { PostService } from "./post.service.js";
-import { ValidationError, NotFoundError } from "../auth/auth.errors.js";
+import { ValidationError, NotFoundError } from "../infrastructure/errors.js";
 
 export class PostController {
     constructor(private postService: PostService) {}

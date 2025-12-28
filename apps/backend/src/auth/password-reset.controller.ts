@@ -1,15 +1,11 @@
 import type { Request, Response } from "express";
 import type { PasswordResetService } from "./password-reset.service.js";
-import type { EmailService } from "../infrastructure/email.service.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
-import { ValidationError } from "./auth.errors.js";
+import { ValidationError } from "../infrastructure/errors.js";
 import { isValidEmail, isValidPassword } from "./validation.util.js";
 
 export class PasswordResetController {
-    constructor(
-        private passwordResetService: PasswordResetService,
-        private emailService: EmailService
-    ) {}
+    constructor(private passwordResetService: PasswordResetService) {}
 
     requestReset = async (req: Request, res: Response): Promise<void> => {
         try {
@@ -29,14 +25,7 @@ export class PasswordResetController {
                 return;
             }
 
-            const result = await this.passwordResetService.requestPasswordReset({ email });
-
-            if (result.token && result.email) {
-                await this.emailService.sendPasswordResetEmail({
-                    to: result.email,
-                    resetToken: result.token,
-                });
-            }
+            await this.passwordResetService.requestPasswordReset({ email });
 
             res.status(HTTP_STATUS.OK).json({
                 message: "If an account exists with this email, a password reset link has been sent",
