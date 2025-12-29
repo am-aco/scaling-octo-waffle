@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { SessionRepository, type SessionUser } from "./session.repository.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
+import { SESSION_COOKIE_NAME } from "./auth.constants.js";
 
 export interface SessionData {
     user: SessionUser;
@@ -19,7 +20,7 @@ declare global {
 export function createAuthMiddleware(sessionRepository: SessionRepository) {
     return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
         try {
-            const sessionId = req.cookies.sessionId;
+            const sessionId = req.cookies[SESSION_COOKIE_NAME];
 
             if (!sessionId) {
                 return next();

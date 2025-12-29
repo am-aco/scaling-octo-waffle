@@ -1,3 +1,5 @@
+export const SESSION_COOKIE_NAME = "sid";
+
 export const SESSION_DURATION_DAYS = 7;
 
 export const REMEMBER_ME_DURATION_DAYS = 30;
