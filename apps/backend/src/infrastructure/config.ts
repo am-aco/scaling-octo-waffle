@@ -7,6 +7,7 @@ interface Config {
     port: number;
     appBaseUrl: string;
     allowedOrigins: string[];
+    trustProxy: number | boolean | undefined;
     database: {
         host: string;
         port: number;
@@ -46,6 +47,16 @@ function getEnvOrDefault(name: string, defaultValue: string): string {
     return process.env[name] ?? defaultValue;
 }
 
+/* Helper to parse TRUST_PROXY env var (number, "true", or undefined) */
+function parseTrustProxy(): number | boolean | undefined {
+    const value = process.env["TRUST_PROXY"];
+    if (!value) return undefined;
+    if (value === "true") return true;
+    const num = parseInt(value, 10);
+    if (!isNaN(num)) return num;
+    return undefined;
+}
+
 function loadConfig(): Config {
     const nodeEnv = requireEnv("NODE_ENV");
 
@@ -67,6 +78,7 @@ function loadConfig(): Config {
         port: requireEnvInt("PORT"),
         appBaseUrl: requireEnv("APP_BASE_URL"),
         allowedOrigins,
+        trustProxy: parseTrustProxy(),
         database: {
             host: requireEnv("DB_HOST"),
             port: requireEnvInt("DB_PORT"),

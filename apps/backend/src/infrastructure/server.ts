@@ -43,6 +43,10 @@ import {
 export function createServer(): Express {
     const app = express();
 
+    if (config.trustProxy) {
+        app.set("trust proxy", config.trustProxy);
+    }
+
     app.use(helmet());
 
     if (config.allowedOrigins.length) {
