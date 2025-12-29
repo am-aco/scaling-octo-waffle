@@ -34,11 +34,11 @@ export class PostController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Create post error");
+            handleControllerError(error, req, res, "Create post error");
         }
     };
 
-    getAllPosts = async (_req: Request, res: Response): Promise<void> => {
+    getAllPosts = async (req: Request, res: Response): Promise<void> => {
         try {
             const posts = await this.postService.getAllPosts();
 
@@ -47,7 +47,7 @@ export class PostController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Get all posts error");
+            handleControllerError(error, req, res, "Get all posts error");
         }
     };
 
@@ -76,7 +76,7 @@ export class PostController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Get post by ID error");
+            handleControllerError(error, req, res, "Get post by ID error");
         }
     };
 
@@ -122,7 +122,7 @@ export class PostController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Update post error");
+            handleControllerError(error, req, res, "Update post error");
         }
     };
 
@@ -151,7 +151,7 @@ export class PostController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Delete post error");
+            handleControllerError(error, req, res, "Delete post error");
         }
     };
 }

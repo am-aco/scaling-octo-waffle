@@ -1,6 +1,5 @@
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import { HTTP_STATUS } from "./http.js";
-import { logger } from "./logger.js";
 import {
     ValidationError,
     ConflictError,
@@ -9,7 +8,7 @@ import {
     ForbiddenError,
 } from "./errors.js";
 
-export function handleControllerError(error: unknown, res: Response, context: string): void {
+export function handleControllerError(error: unknown, req: Request, res: Response, context: string): void {
     if (error instanceof ValidationError) {
         res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
         return;
@@ -35,6 +34,6 @@ export function handleControllerError(error: unknown, res: Response, context: st
         return;
     }
 
-    logger.error("Controller error", { context, error });
+    req.log.error("Controller error", { context, error });
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
 }

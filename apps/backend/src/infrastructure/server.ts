@@ -30,10 +30,10 @@ import { PostService } from "../posts/post.service.js";
 import { createPostRouter } from "../posts/post.routes.js";
 import { EmailService } from "./email.service.js";
 import { RateLimiter } from "./rate-limiter.js";
+import { requestIdMiddleware } from "./request-id.middleware.js";
 import { pool } from "./database.js";
 import { HTTP_STATUS } from "./http.js";
 import { config } from "./config.js";
-import { logger } from "./logger.js";
 import {
     ValidationError,
     ConflictError,
@@ -51,6 +51,7 @@ export function createServer(): Express {
     }
 
     app.use(helmet());
+    app.use(requestIdMiddleware);
 
     if (config.allowedOrigins.length) {
         app.use(cors({
@@ -213,7 +214,7 @@ export function createServer(): Express {
     });
 
     /* Global error handler - must be last middleware */
-    app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
         if (err instanceof ValidationError) {
             res.status(HTTP_STATUS.BAD_REQUEST).json({ error: err.message });
             return;
@@ -239,7 +240,7 @@ export function createServer(): Express {
             return;
         }
 
-        logger.error("Unhandled error", { error: err });
+        req.log.error("Unhandled error", { error: err });
         res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
             error: "Internal server error",
         });

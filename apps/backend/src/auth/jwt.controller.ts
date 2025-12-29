@@ -22,7 +22,7 @@ export class JwtController {
             res.status(HTTP_STATUS.OK).json(result);
         }
         catch (error) {
-            handleControllerError(error, res, "JWT login error");
+            handleControllerError(error, req, res, "JWT login error");
         }
     };
 }

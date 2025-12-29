@@ -31,7 +31,7 @@ export class PasswordResetController {
                 message: "If an account exists with this email, a password reset link has been sent",
             });
         } catch (error) {
-            handleControllerError(error, res, "Password reset request error");
+            handleControllerError(error, req, res, "Password reset request error");
         }
     };
 
@@ -69,7 +69,7 @@ export class PasswordResetController {
                 message: "Password has been reset successfully. Please log in with your new password.",
             });
         } catch (error) {
-            handleControllerError(error, res, "Password reset error");
+            handleControllerError(error, req, res, "Password reset error");
         }
     };
 }

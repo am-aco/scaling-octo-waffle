@@ -31,7 +31,7 @@ export class AuthenticationController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Registration error");
+            handleControllerError(error, req, res, "Registration error");
         }
     };
 
@@ -66,7 +66,7 @@ export class AuthenticationController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Login error");
+            handleControllerError(error, req, res, "Login error");
         }
     };
 
@@ -85,7 +85,7 @@ export class AuthenticationController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Logout error");
+            handleControllerError(error, req, res, "Logout error");
         }
     };
 

@@ -24,7 +24,7 @@ export class EmailVerificationController {
                 message: "Email verified successfully",
             });
         } catch (error) {
-            handleControllerError(error, res, "Email verification error");
+            handleControllerError(error, req, res, "Email verification error");
         }
     };
 
@@ -59,7 +59,7 @@ export class EmailVerificationController {
                 message: "If an account exists with this email, a verification link has been sent",
             });
         } catch (error) {
-            handleControllerError(error, res, "Resend verification error");
+            handleControllerError(error, req, res, "Resend verification error");
         }
     };
 }

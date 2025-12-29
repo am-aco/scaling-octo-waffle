@@ -31,11 +31,11 @@ export class UserController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Get user by ID error");
+            handleControllerError(error, req, res, "Get user by ID error");
         }
     };
 
-    getAllUsers = async (_req: Request, res: Response): Promise<void> => {
+    getAllUsers = async (req: Request, res: Response): Promise<void> => {
         try {
             const users = await this.userService.getAllUsers();
 
@@ -44,7 +44,7 @@ export class UserController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Get all users error");
+            handleControllerError(error, req, res, "Get all users error");
         }
     };
 
@@ -76,7 +76,7 @@ export class UserController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Create user error");
+            handleControllerError(error, req, res, "Create user error");
         }
     };
 
@@ -124,7 +124,7 @@ export class UserController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Update user error");
+            handleControllerError(error, req, res, "Update user error");
         }
     };
 
@@ -153,7 +153,7 @@ export class UserController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Delete user error");
+            handleControllerError(error, req, res, "Delete user error");
         }
     };
 }

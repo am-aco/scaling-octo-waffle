@@ -22,7 +22,7 @@ export class TokenController {
             res.status(HTTP_STATUS.OK).json(result);
         }
         catch (error) {
-            handleControllerError(error, res, "Token login error");
+            handleControllerError(error, req, res, "Token login error");
         }
     };
 
@@ -42,7 +42,7 @@ export class TokenController {
             res.status(HTTP_STATUS.OK).json(result);
         }
         catch (error) {
-            handleControllerError(error, res, "Token refresh error");
+            handleControllerError(error, req, res, "Token refresh error");
         }
     };
 
@@ -64,7 +64,7 @@ export class TokenController {
             });
         }
         catch (error) {
-            handleControllerError(error, res, "Token logout error");
+            handleControllerError(error, req, res, "Token logout error");
         }
     };
 }
