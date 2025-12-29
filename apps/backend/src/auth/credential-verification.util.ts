@@ -61,7 +61,7 @@ async function handleFailedLogin(
     await withTransaction(async (client) => {
         await userRepository.incrementFailedLoginAttempts(user.id, client);
 
-        const updatedUser = await userRepository.findById(user.id);
+        const updatedUser = await userRepository.findById(user.id, client);
         if (updatedUser && updatedUser.failed_login_attempts >= MAX_LOGIN_ATTEMPTS) {
             const lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
             await userRepository.lockAccount(user.id, lockedUntil, client);

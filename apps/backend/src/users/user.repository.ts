@@ -50,9 +50,11 @@ export class UserRepository {
     /*
      * Find a user by ID
      * Returns null if user doesn't exist
+     * Supports transactions via optional client parameter
      */
-    async findById(id: string): Promise<User | null> {
-        const result = await pool.query<User>("SELECT * FROM users WHERE id = $1", [
+    async findById(id: string, client?: PoolClient): Promise<User | null> {
+        const executor = client ?? pool;
+        const result = await executor.query<User>("SELECT * FROM users WHERE id = $1", [
             id,
         ]);
 
