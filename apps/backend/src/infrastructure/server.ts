@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -31,6 +31,13 @@ import { EmailService } from "./email.service.js";
 import { RateLimiter } from "./rate-limiter.js";
 import { HTTP_STATUS } from "./http.js";
 import { config } from "./config.js";
+import {
+    ValidationError,
+    ConflictError,
+    AuthenticationError,
+    NotFoundError,
+    ForbiddenError,
+} from "./errors.js";
 
 /* Creates and configures the Express application */
 export function createServer(): Express {
@@ -162,6 +169,46 @@ export function createServer(): Express {
         postService,
         requireOwnership,
     }));
+
+    /* 404 handler for undefined routes */
+    app.use((_req: Request, res: Response) => {
+        res.status(HTTP_STATUS.NOT_FOUND).json({
+            error: "Not found",
+        });
+    });
+
+    /* Global error handler - must be last middleware */
+    app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+        if (err instanceof ValidationError) {
+            res.status(HTTP_STATUS.BAD_REQUEST).json({ error: err.message });
+            return;
+        }
+
+        if (err instanceof ConflictError) {
+            res.status(HTTP_STATUS.CONFLICT).json({ error: err.message });
+            return;
+        }
+
+        if (err instanceof AuthenticationError) {
+            res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: err.message });
+            return;
+        }
+
+        if (err instanceof ForbiddenError) {
+            res.status(HTTP_STATUS.FORBIDDEN).json({ error: err.message });
+            return;
+        }
+
+        if (err instanceof NotFoundError) {
+            res.status(HTTP_STATUS.NOT_FOUND).json({ error: err.message });
+            return;
+        }
+
+        console.error("Unhandled error:", err);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+            error: "Internal server error",
+        });
+    });
 
     return app;
 }
