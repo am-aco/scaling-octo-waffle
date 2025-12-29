@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction, RequestHandler } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { HTTP_STATUS } from './http.js';
 
 const CSRF_HEADER = 'x-csrf-token';
@@ -37,11 +37,4 @@ export function validateCsrf(req: Request, res: Response, next: NextFunction): v
     }
 
     next();
-}
-
-export function createCsrfMiddleware(enabled: boolean): RequestHandler {
-    if (!enabled) {
-        return (_req, _res, next) => next();
-    }
-    return validateCsrf;
 }

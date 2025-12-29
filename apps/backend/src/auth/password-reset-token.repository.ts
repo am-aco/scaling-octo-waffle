@@ -10,7 +10,7 @@ export interface PasswordResetToken {
     used_at: Date | null;
 }
 
-export interface CreatePasswordResetTokenData {
+export interface CreatePasswordResetTokenRecord {
     user_id: string;
     token: string;
     expires_at: Date;
@@ -18,7 +18,7 @@ export interface CreatePasswordResetTokenData {
 
 export class PasswordResetTokenRepository {
     async create(
-        data: CreatePasswordResetTokenData,
+        data: CreatePasswordResetTokenRecord,
         client?: PoolClient,
     ): Promise<PasswordResetToken> {
         const executor = client ?? pool;

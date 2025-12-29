@@ -10,7 +10,7 @@ export interface EmailVerificationToken {
     used_at: Date | null;
 }
 
-export interface CreateEmailVerificationTokenData {
+export interface CreateEmailVerificationTokenRecord {
     user_id: string;
     token: string;
     expires_at: Date;
@@ -18,7 +18,7 @@ export interface CreateEmailVerificationTokenData {
 
 export class EmailVerificationTokenRepository {
     async create(
-        data: CreateEmailVerificationTokenData,
+        data: CreateEmailVerificationTokenRecord,
         client?: PoolClient,
     ): Promise<EmailVerificationToken> {
         const executor = client ?? pool;

@@ -10,7 +10,7 @@ export interface RefreshToken {
     revoked_at: Date | null;
 }
 
-export interface CreateRefreshTokenData {
+export interface CreateRefreshTokenRecord {
     user_id: string;
     token_family: string;
     expires_at: Date;
@@ -18,7 +18,7 @@ export interface CreateRefreshTokenData {
 
 export class RefreshTokenRepository {
     async create(
-        data: CreateRefreshTokenData,
+        data: CreateRefreshTokenRecord,
         client?: PoolClient
     ): Promise<RefreshToken> {
         const query = `

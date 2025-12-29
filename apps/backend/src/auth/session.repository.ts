@@ -20,7 +20,7 @@ export interface SessionWithUser extends Session {
     user: SessionUser;
 }
 
-export interface CreateSessionData {
+export interface CreateSessionRecord {
     user_id: string;
     expires_at: Date;
     is_remember_me?: boolean;
@@ -41,7 +41,7 @@ interface SessionWithUserRow {
 
 export class SessionRepository {
     async create(
-        data: CreateSessionData,
+        data: CreateSessionRecord,
         client?: PoolClient
     ): Promise<Session> {
         const query = `

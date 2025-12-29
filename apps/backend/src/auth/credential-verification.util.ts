@@ -40,14 +40,6 @@ export async function verifyCredentials(
     };
 }
 
-export async function recordSuccessfulLogin(
-    userRepository: UserRepository,
-    userId: string,
-): Promise<void> {
-    await userRepository.resetFailedLoginAttempts(userId);
-    await userRepository.updateLastLogin(userId);
-}
-
 function checkAccountState(user: User): void {
     if (!user.is_active) {
         throw new ForbiddenError("Account is inactive");

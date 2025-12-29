@@ -17,15 +17,8 @@ export class PostController {
                 return;
             }
 
-            if (!req.user) {
-                res.status(HTTP_STATUS.UNAUTHORIZED).json({
-                    error: "Authentication required",
-                });
-                return;
-            }
-
             const post = await this.postService.createPost({
-                userId: req.user.id,
+                userId: req.user!.id,
                 title,
                 content,
             });

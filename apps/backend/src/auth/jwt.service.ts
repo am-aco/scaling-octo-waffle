@@ -1,6 +1,7 @@
 import { UserRepository } from "../users/user.repository.js";
 import { signToken } from "./jwt.util.js";
-import { verifyCredentials, recordSuccessfulLogin } from "./credential-verification.util.js";
+import { verifyCredentials } from "./credential-verification.util.js";
+import { withTransaction } from "../infrastructure/database.js";
 
 export class JwtService {
     constructor(private userRepository: UserRepository) {}
@@ -13,7 +14,10 @@ export class JwtService {
 
         const token = signToken(user.id, user.email);
 
-        await recordSuccessfulLogin(this.userRepository, user.id);
+        await withTransaction(async (client) => {
+            await this.userRepository.resetFailedLoginAttempts(user.id, client);
+            await this.userRepository.updateLastLogin(user.id, client);
+        });
 
         return {
             token,
