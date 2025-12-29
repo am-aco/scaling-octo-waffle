@@ -7,6 +7,14 @@ export const pool = new Pool({
     database: config.database.name,
     user: config.database.user,
     password: config.database.password,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+});
+
+/* Log pool errors (connection issues outside of queries) */
+pool.on("error", (err) => {
+    console.error("Unexpected database pool error:", err);
 });
 
 export async function testConnection(): Promise<void> {
