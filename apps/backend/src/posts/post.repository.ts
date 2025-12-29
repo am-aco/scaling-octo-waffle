@@ -9,13 +9,13 @@ export interface Post {
     updated_at: Date;
 }
 
-export interface CreatePostData {
+export interface CreatePostRecord {
     user_id: string;
     title: string;
     content: string;
 }
 
-export interface UpdatePostData {
+export interface UpdatePostRecord {
     title?: string | undefined;
     content?: string | undefined;
 }
@@ -33,7 +33,7 @@ export interface PostWithAuthor {
 }
 
 export class PostRepository {
-    async create(postData: CreatePostData): Promise<Post> {
+    async create(postData: CreatePostRecord): Promise<Post> {
         const result = await pool.query<Post>(
             `INSERT INTO posts (user_id, title, content)
              VALUES ($1, $2, $3)
@@ -88,7 +88,7 @@ export class PostRepository {
         return result.rows;
     }
 
-    async update(postId: string, updates: UpdatePostData): Promise<Post | null> {
+    async update(postId: string, updates: UpdatePostRecord): Promise<Post | null> {
         const fields: string[] = [];
         const values: unknown[] = [];
         let paramCount = 1;

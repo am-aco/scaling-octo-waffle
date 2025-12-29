@@ -1,51 +1,47 @@
-import crypto from 'node:crypto';
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction, RequestHandler } from 'express';
 import { HTTP_STATUS } from './http.js';
 
-const CSRF_COOKIE_NAME = 'csrf-token';
-const CSRF_HEADER_NAME = 'x-csrf-token';
+const CSRF_HEADER = 'x-csrf-token';
 
-export class CsrfProtection {
-    generateToken(): string {
-        return crypto.randomBytes(32).toString('base64url');
+
+/* Middleware that validates CSRF token against session */
+export function validateCsrf(req: Request, res: Response, next: NextFunction): void {
+    /* Skip safe methods (read-only) */
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+        next();
+        return;
     }
 
-    setCsrfCookie(res: Response, token: string): void {
-        res.cookie(CSRF_COOKIE_NAME, token, {
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
+    /* Must be authenticated to validate CSRF */
+    if (!req.session) {
+        res.status(HTTP_STATUS.UNAUTHORIZED).json({
+            error: 'Authentication required',
         });
+        return;
     }
 
-    createMiddleware() {
-        return (req: Request, res: Response, next: NextFunction): void => {
-            const method = req.method;
+    const headerToken = req.headers[CSRF_HEADER];
 
-            if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
-                next();
-                return;
-            }
-
-            const cookieToken = req.cookies[CSRF_COOKIE_NAME];
-            const headerToken = req.headers[CSRF_HEADER_NAME];
-
-            if (!cookieToken || !headerToken) {
-                res.status(HTTP_STATUS.FORBIDDEN).json({
-                    error: 'CSRF token missing',
-                });
-                return;
-            }
-
-            if (cookieToken !== headerToken) {
-                res.status(HTTP_STATUS.FORBIDDEN).json({
-                    error: 'CSRF token mismatch',
-                });
-                return;
-            }
-
-            next();
-        };
+    if (!headerToken) {
+        res.status(HTTP_STATUS.FORBIDDEN).json({
+            error: 'CSRF token missing',
+        });
+        return;
     }
+
+    if (headerToken !== req.session.csrfToken) {
+        res.status(HTTP_STATUS.FORBIDDEN).json({
+            error: 'CSRF token invalid',
+        });
+        return;
+    }
+
+    next();
+}
+
+export function createCsrfMiddleware(enabled: boolean): RequestHandler {
+    if (!enabled) {
+        return (_req, _res, next) => next();
+    }
+    return validateCsrf;
 }

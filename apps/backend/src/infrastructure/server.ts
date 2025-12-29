@@ -27,7 +27,6 @@ import { PostService } from "../posts/post.service.js";
 import { createPostRouter } from "../posts/post.routes.js";
 import { EmailService } from "./email.service.js";
 import { RateLimiter } from "./rate-limiter.js";
-import { CsrfProtection } from "./csrf.js";
 import { HTTP_STATUS } from "./http.js";
 
 /* Creates and configures the Express application */
@@ -78,9 +77,6 @@ export function createServer(): Express {
     /* Rate limiter instance */
     const rateLimiter = new RateLimiter();
 
-    /* CSRF protection instance */
-    const csrfProtection = new CsrfProtection();
-
     /* Rate limiting middleware for different endpoints */
     const loginRateLimit = rateLimiter.createMiddleware({
         max: 5,
@@ -115,7 +111,7 @@ export function createServer(): Express {
         authenticationService,
         loginRateLimit,
         registerRateLimit,
-        csrfProtection,
+        csrfEnabled: true,
     }));
 
     /* Mount JWT authentication routes at /auth/jwt */

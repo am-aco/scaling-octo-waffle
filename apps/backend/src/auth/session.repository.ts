@@ -7,6 +7,7 @@ export interface Session {
     created_at: Date;
     expires_at: Date;
     is_remember_me: boolean;
+    csrf_token: string;
 }
 
 export interface SessionUser {
@@ -23,6 +24,7 @@ export interface CreateSessionData {
     user_id: string;
     expires_at: Date;
     is_remember_me?: boolean;
+    csrf_token: string;
 }
 
 interface SessionWithUserRow {
@@ -31,6 +33,7 @@ interface SessionWithUserRow {
     created_at: Date;
     expires_at: Date;
     is_remember_me: boolean;
+    csrf_token: string;
     user_id_fk: string;
     user_email: string;
     user_role_id: string;
@@ -42,8 +45,8 @@ export class SessionRepository {
         client?: PoolClient
     ): Promise<Session> {
         const query = `
-            INSERT INTO sessions (user_id, expires_at, is_remember_me)
-            VALUES ($1, $2, $3)
+            INSERT INTO sessions (user_id, expires_at, is_remember_me, csrf_token)
+            VALUES ($1, $2, $3, $4)
             RETURNING *
         `;
 
@@ -52,6 +55,7 @@ export class SessionRepository {
             data.user_id,
             data.expires_at,
             data.is_remember_me ?? false,
+            data.csrf_token,
         ]);
 
         return result.rows[0]!;
@@ -70,6 +74,7 @@ export class SessionRepository {
                 sessions.created_at,
                 sessions.expires_at,
                 sessions.is_remember_me,
+                sessions.csrf_token,
                 users.id AS user_id_fk,
                 users.email AS user_email,
                 users.role_id AS user_role_id
@@ -106,6 +111,7 @@ export class SessionRepository {
             created_at: row.created_at,
             expires_at: row.expires_at,
             is_remember_me: row.is_remember_me,
+            csrf_token: row.csrf_token,
             user: {
                 id: row.user_id_fk,
                 email: row.user_email,

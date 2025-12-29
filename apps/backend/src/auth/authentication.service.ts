@@ -6,6 +6,7 @@ import { ValidationError, ConflictError } from "../infrastructure/errors.js";
 import { withTransaction } from "../infrastructure/database.js";
 import { SESSION_DURATION_DAYS, REMEMBER_ME_DURATION_DAYS } from "./auth.constants.js";
 import { verifyCredentials } from "./credential-verification.util.js";
+import { generateSecureToken } from "./token.util.js";
 
 export interface RegisterData {
     email: string;
@@ -80,6 +81,8 @@ export class AuthenticationService {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + sessionDuration);
 
+        const csrfToken = generateSecureToken();
+
         const session = await withTransaction(async (client) => {
             await this.userRepository.resetFailedLoginAttempts(user.id, client);
             await this.userRepository.updateLastLogin(user.id, client);
@@ -87,6 +90,7 @@ export class AuthenticationService {
                 user_id: user.id,
                 expires_at: expiresAt,
                 is_remember_me: isRememberMe,
+                csrf_token: csrfToken,
             }, client);
         });
 

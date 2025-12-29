@@ -15,18 +15,18 @@ export interface User {
     updated_at: Date;
 }
 
-export interface CreateUserData {
+export interface CreateUserRecord {
     email: string;
     password_hash: string;
 }
 
-export interface CreateUserWithRoleData {
+export interface CreateUserWithRoleRecord {
     email: string;
     password_hash: string;
     role_id: string;
 }
 
-export interface UpdateUserData {
+export interface UpdateUserRecord {
     email?: string | undefined;
     is_active?: boolean | undefined;
     role_id?: string | undefined;
@@ -64,7 +64,7 @@ export class UserRepository {
      * Returns the created user with generated ID and timestamps
      * Assigns 'user' role by default
      */
-    async create(userData: CreateUserData): Promise<User> {
+    async create(userData: CreateUserRecord): Promise<User> {
         const result = await pool.query<User>(
             `INSERT INTO users (email, password_hash, role_id)
                 VALUES ($1, $2, (SELECT id FROM roles WHERE name = 'user'))
@@ -135,7 +135,7 @@ export class UserRepository {
      * Used by admins to create users with custom roles
      * Returns the created user with generated ID and timestamps
      */
-    async createWithRole(userData: CreateUserWithRoleData): Promise<User> {
+    async createWithRole(userData: CreateUserWithRoleRecord): Promise<User> {
         const result = await pool.query<User>(
             `INSERT INTO users (email, password_hash, role_id)
                 VALUES ($1, $2, $3)
@@ -151,7 +151,7 @@ export class UserRepository {
      * Only updates provided fields (partial update)
      * Returns the updated user or null if user doesn't exist
      */
-    async update(userId: string, updates: UpdateUserData): Promise<User | null> {
+    async update(userId: string, updates: UpdateUserRecord): Promise<User | null> {
         const fields: string[] = [];
         const values: unknown[] = [];
         let paramCount = 1;

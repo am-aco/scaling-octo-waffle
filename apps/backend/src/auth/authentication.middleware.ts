@@ -2,10 +2,16 @@ import type { Request, Response, NextFunction } from "express";
 import { SessionRepository, type SessionUser } from "./session.repository.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 
+export interface SessionData {
+    user: SessionUser;
+    csrfToken: string;
+}
+
 declare global {
     namespace Express {
         interface Request {
             user?: SessionUser;
+            session?: SessionData;
         }
     }
 }
@@ -29,6 +35,11 @@ export function createAuthMiddleware(sessionRepository: SessionRepository) {
                 id: session.user.id,
                 email: session.user.email,
                 permissions: session.user.permissions,
+            };
+
+            req.session = {
+                user: session.user,
+                csrfToken: session.csrf_token,
             };
 
             next();
