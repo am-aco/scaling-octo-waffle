@@ -5,6 +5,7 @@ import "dotenv/config";
 interface Config {
     nodeEnv: "development" | "production" | "test";
     port: number;
+    appBaseUrl: string;
     database: {
         host: string;
         port: number;
@@ -52,6 +53,7 @@ function loadConfig(): Config {
     return {
         nodeEnv: nodeEnv as Config["nodeEnv"],
         port: requireEnvInt("PORT"),
+        appBaseUrl: requireEnv("APP_BASE_URL"),
         database: {
             host: requireEnv("DB_HOST"),
             port: requireEnvInt("DB_PORT"),

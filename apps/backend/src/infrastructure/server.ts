@@ -1,4 +1,5 @@
 import express, { type Express } from "express";
+import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { createAuthenticationRouter } from "../auth/authentication.routes.js";
 import { createAuthMiddleware } from "../auth/authentication.middleware.js";
@@ -28,11 +29,13 @@ import { createPostRouter } from "../posts/post.routes.js";
 import { EmailService } from "./email.service.js";
 import { RateLimiter } from "./rate-limiter.js";
 import { HTTP_STATUS } from "./http.js";
+import { config } from "./config.js";
 
 /* Creates and configures the Express application */
 export function createServer(): Express {
     const app = express();
 
+    app.use(helmet());
     app.use(express.json());
     app.use(cookieParser());
 
@@ -45,7 +48,7 @@ export function createServer(): Express {
     const postRepository = new PostRepository();
 
     /* Shared service instances */
-    const emailService = new EmailService('http://localhost:3000');
+    const emailService = new EmailService(config.appBaseUrl);
     const authenticationService = new AuthenticationService(
         userRepository,
         sessionRepository,
