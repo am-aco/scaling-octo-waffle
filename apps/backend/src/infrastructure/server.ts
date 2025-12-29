@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import helmet from "helmet";
 import cors from "cors";
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import { createAuthenticationRouter } from "../auth/authentication.routes.js";
 import { createAuthMiddleware } from "../auth/authentication.middleware.js";
@@ -58,6 +59,10 @@ export function createServer(): Express {
         }));
     }
 
+    app.use(compression({
+        level: 6,
+        threshold: 1024,
+    }));
     app.use(express.json({ limit: "10kb" }));
     app.use(cookieParser());
 
