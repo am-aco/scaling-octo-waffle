@@ -64,6 +64,7 @@ export function createServer(): Express {
         threshold: 1024,
     }));
     app.use(express.json({ limit: "10kb" }));
+    app.use(express.urlencoded({ extended: true, limit: "10kb" }));
     app.use(cookieParser());
 
     /* Shared repository instances (composition root) */

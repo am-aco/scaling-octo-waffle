@@ -1,3 +1,5 @@
+import { config } from "../infrastructure/config.js";
+
 export const SESSION_COOKIE_NAME = "sid";
 
 export const SESSION_DURATION_DAYS = 7;
@@ -8,7 +10,7 @@ export const REMEMBER_ME_DURATION_MS = REMEMBER_ME_DURATION_DAYS * 24 * 60 * 60 
 
 export const COOKIE_OPTIONS = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: config.nodeEnv === "production",
     sameSite: "strict" as const,
     maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000,
 };
