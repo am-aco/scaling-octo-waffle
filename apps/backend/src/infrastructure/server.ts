@@ -29,6 +29,7 @@ import { PostService } from "../posts/post.service.js";
 import { createPostRouter } from "../posts/post.routes.js";
 import { EmailService } from "./email.service.js";
 import { RateLimiter } from "./rate-limiter.js";
+import { pool } from "./database.js";
 import { HTTP_STATUS } from "./http.js";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
@@ -126,8 +127,31 @@ export function createServer(): Express {
     app.use(createAuthMiddleware(sessionRepository));
     app.use(createJwtAuthMiddleware(userRepository));
 
-    app.get("/health", (_req, res) => {
-        res.status(HTTP_STATUS.OK).json({ status: "ok" });
+    app.get("/health", async (_req, res) => {
+        const health: {
+            status: "ok" | "error";
+            database: "connected" | "disconnected";
+            timestamp: string;
+            error?: string;
+        } = {
+            status: "ok",
+            database: "connected",
+            timestamp: new Date().toISOString(),
+        };
+
+        try {
+            await pool.query("SELECT 1");
+        }
+        catch (error) {
+            health.status = "error";
+            health.database = "disconnected";
+            health.error = error instanceof Error ? error.message : "Unknown error";
+
+            res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json(health);
+            return;
+        }
+
+        res.status(HTTP_STATUS.OK).json(health);
     });
 
     /* Mount authentication routes at /auth */
