@@ -1,6 +1,7 @@
 import { config } from "./infrastructure/config.js";
 import { pool, testConnection } from "./infrastructure/database.js";
 import { createServer } from "./infrastructure/server.js";
+import { logger } from "./infrastructure/logger.js";
 
 /* Test database connection before starting */
 await testConnection();
@@ -10,33 +11,36 @@ const app = createServer();
 
 /* Start listening */
 const server = app.listen(config.port, () => {
-    console.log(`Server running on http://localhost:${config.port}`);
-    console.log(`Environment: ${config.nodeEnv}`);
+    logger.info("Server started", {
+        port: config.port,
+        environment: config.nodeEnv,
+        url: `http://localhost:${config.port}`,
+    });
 });
 
 /* Graceful shutdown handler */
 async function shutdown(signal: string): Promise<void> {
-    console.log(`\n${signal} received. Starting graceful shutdown...`);
+    logger.info("Graceful shutdown initiated", { signal });
 
     /* Stop accepting new connections */
     server.close((err) => {
         if (err) {
-            console.error("Error closing HTTP server:", err);
+            logger.error("Error closing HTTP server", { error: err });
         } else {
-            console.log("HTTP server closed");
+            logger.info("HTTP server closed");
         }
     });
 
     try {
         /* Close database pool */
         await pool.end();
-        console.log("Database pool closed");
+        logger.info("Database pool closed");
 
-        console.log("Graceful shutdown complete");
+        logger.info("Graceful shutdown complete");
         process.exit(0);
     }
     catch (error) {
-        console.error("Error during shutdown:", error);
+        logger.error("Error during shutdown", { error });
         process.exit(1);
     }
 }
@@ -46,7 +50,9 @@ function forceExit(signal: string): void {
     const SHUTDOWN_TIMEOUT_MS = 10000;
 
     setTimeout(() => {
-        console.error(`Forced exit after ${SHUTDOWN_TIMEOUT_MS}ms timeout`);
+        logger.error("Forced exit due to shutdown timeout", {
+            timeoutMs: SHUTDOWN_TIMEOUT_MS,
+        });
         process.exit(1);
     }, SHUTDOWN_TIMEOUT_MS).unref();
 

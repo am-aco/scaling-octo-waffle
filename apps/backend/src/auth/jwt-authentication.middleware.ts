@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { UserRepository } from "../users/user.repository.js";
 import { verifyToken } from "./jwt.util.js";
+import { logger } from "../infrastructure/logger.js";
 
 /* JWT authentication middleware factory */
 export function createJwtAuthMiddleware(userRepository: UserRepository) {
@@ -43,7 +44,7 @@ export function createJwtAuthMiddleware(userRepository: UserRepository) {
             next();
         }
         catch (error) {
-            console.error("JWT auth middleware error:", error);
+            logger.error("JWT auth middleware error", { error });
             next();
         }
     };

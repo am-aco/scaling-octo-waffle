@@ -1,4 +1,5 @@
 import argon2 from "argon2";
+import { logger } from "../infrastructure/logger.js";
 
 const ARGON2_OPTIONS = {
     type: argon2.argon2id,
@@ -27,7 +28,7 @@ export async function verifyPassword(
         return await argon2.verify(hash, password);
     }
     catch (error) {
-        console.error("Password verification failed:", error);
+        logger.error("Password verification failed", { error });
         return false;
     }
 }

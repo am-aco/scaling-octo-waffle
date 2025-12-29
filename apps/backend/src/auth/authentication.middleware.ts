@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { SessionRepository, type SessionUser } from "./session.repository.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import { SESSION_COOKIE_NAME } from "./auth.constants.js";
+import { logger } from "../infrastructure/logger.js";
 
 export interface SessionData {
     user: SessionUser;
@@ -46,7 +47,7 @@ export function createAuthMiddleware(sessionRepository: SessionRepository) {
             next();
         }
         catch (error) {
-            console.error("Auth middleware error:", error);
+            logger.error("Auth middleware error", { error });
             next();
         }
     };

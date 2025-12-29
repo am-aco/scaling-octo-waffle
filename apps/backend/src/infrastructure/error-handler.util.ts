@@ -1,5 +1,6 @@
 import type { Response } from "express";
 import { HTTP_STATUS } from "./http.js";
+import { logger } from "./logger.js";
 import {
     ValidationError,
     ConflictError,
@@ -34,6 +35,6 @@ export function handleControllerError(error: unknown, res: Response, context: st
         return;
     }
 
-    console.error(`${context}:`, error);
+    logger.error("Controller error", { context, error });
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
 }

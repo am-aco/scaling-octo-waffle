@@ -31,6 +31,7 @@ import { EmailService } from "./email.service.js";
 import { RateLimiter } from "./rate-limiter.js";
 import { HTTP_STATUS } from "./http.js";
 import { config } from "./config.js";
+import { logger } from "./logger.js";
 import {
     ValidationError,
     ConflictError,
@@ -208,7 +209,7 @@ export function createServer(): Express {
             return;
         }
 
-        console.error("Unhandled error:", err);
+        logger.error("Unhandled error", { error: err });
         res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
             error: "Internal server error",
         });
