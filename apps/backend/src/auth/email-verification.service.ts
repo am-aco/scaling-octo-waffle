@@ -3,7 +3,7 @@ import type { UserRepository } from '../users/user.repository.js';
 import type { EmailVerificationTokenRepository } from './email-verification-token.repository.js';
 import type { EmailService } from '../infrastructure/email.service.js';
 import { ValidationError } from '../infrastructure/errors.js';
-import { generateSecureToken } from './token.util.js';
+import { generateSecureToken, hashToken } from './token.util.js';
 
 const TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000; /* 24 hours */
 
@@ -33,6 +33,7 @@ export class EmailVerificationService {
 
     async generateVerificationToken(data: SendVerificationEmailData): Promise<string> {
         const token = generateSecureToken();
+        const tokenHash = hashToken(token);
         const expiresAt = new Date(Date.now() + TOKEN_EXPIRATION_MS);
 
         await withTransaction(async (client) => {
@@ -41,7 +42,7 @@ export class EmailVerificationService {
             await this.verificationTokenRepository.create(
                 {
                     user_id: data.userId,
-                    token,
+                    token: tokenHash,
                     expires_at: expiresAt,
                 },
                 client,
@@ -52,7 +53,8 @@ export class EmailVerificationService {
     }
 
     async verifyEmail(data: VerifyEmailData): Promise<void> {
-        const verificationToken = await this.verificationTokenRepository.findByToken(data.token);
+        const tokenHash = hashToken(data.token);
+        const verificationToken = await this.verificationTokenRepository.findByToken(tokenHash);
 
         if (!verificationToken) {
             throw new ValidationError('Invalid or expired verification token');
@@ -69,7 +71,7 @@ export class EmailVerificationService {
         await withTransaction(async (client) => {
             await this.userRepository.markEmailAsVerified(verificationToken.user_id, client);
 
-            await this.verificationTokenRepository.markAsUsed(data.token, client);
+            await this.verificationTokenRepository.markAsUsed(tokenHash, client);
         });
     }
 

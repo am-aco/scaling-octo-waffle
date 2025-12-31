@@ -3,6 +3,7 @@ import type { Logger } from "winston";
 import { SessionRepository, type SessionUser } from "./session.repository.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import { SESSION_COOKIE_NAME } from "./auth.constants.js";
+import { parseSessionToken, hashToken, secureCompare } from "./token.util.js";
 
 export interface SessionData {
     user: SessionUser;
@@ -23,15 +24,26 @@ declare global {
 export function createAuthMiddleware(sessionRepository: SessionRepository) {
     return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
         try {
-            const sessionId = req.cookies[SESSION_COOKIE_NAME];
+            const sessionToken = req.cookies[SESSION_COOKIE_NAME];
 
-            if (!sessionId) {
+            if (!sessionToken) {
                 return next();
             }
 
-            const session = await sessionRepository.findById(sessionId);
+            const parsed = parseSessionToken(sessionToken);
+
+            if (!parsed) {
+                return next();
+            }
+
+            const session = await sessionRepository.findById(parsed.id);
 
             if (!session) {
+                return next();
+            }
+
+            const providedSecretHash = hashToken(parsed.secret);
+            if (!secureCompare(providedSecretHash, session.secret_hash)) {
                 return next();
             }
 

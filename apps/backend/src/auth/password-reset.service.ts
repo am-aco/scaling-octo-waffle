@@ -5,7 +5,7 @@ import type { SessionRepository } from './session.repository.js';
 import type { EmailService } from '../infrastructure/email.service.js';
 import { ValidationError } from '../infrastructure/errors.js';
 import { hashPassword } from './password.util.js';
-import { generateSecureToken } from './token.util.js';
+import { generateSecureToken, hashToken } from './token.util.js';
 
 const TOKEN_EXPIRATION_MS = 60 * 60 * 1000; /* 1 hour */
 
@@ -34,6 +34,7 @@ export class PasswordResetService {
         }
 
         const token = generateSecureToken();
+        const tokenHash = hashToken(token);
         const expiresAt = new Date(Date.now() + TOKEN_EXPIRATION_MS);
 
         await withTransaction(async (client) => {
@@ -42,7 +43,7 @@ export class PasswordResetService {
             await this.resetTokenRepository.create(
                 {
                     user_id: user.id,
-                    token,
+                    token: tokenHash,
                     expires_at: expiresAt,
                 },
                 client,
@@ -56,7 +57,8 @@ export class PasswordResetService {
     }
 
     async resetPassword(data: PasswordResetConfirmation): Promise<void> {
-        const resetToken = await this.resetTokenRepository.findByToken(data.token);
+        const tokenHash = hashToken(data.token);
+        const resetToken = await this.resetTokenRepository.findByToken(tokenHash);
 
         if (!resetToken) {
             throw new ValidationError('Invalid or expired reset token');
@@ -75,7 +77,7 @@ export class PasswordResetService {
         await withTransaction(async (client) => {
             await this.userRepository.updatePassword(resetToken.user_id, passwordHash, client);
 
-            await this.resetTokenRepository.markAsUsed(data.token, client);
+            await this.resetTokenRepository.markAsUsed(tokenHash, client);
 
             await this.sessionRepository.deleteAllForUser(resetToken.user_id, client);
         });

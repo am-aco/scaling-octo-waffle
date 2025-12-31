@@ -8,6 +8,7 @@ export interface Session {
     expires_at: Date;
     is_remember_me: boolean;
     csrf_token: string;
+    secret_hash: string;
 }
 
 export interface SessionUser {
@@ -21,10 +22,12 @@ export interface SessionWithUser extends Session {
 }
 
 export interface CreateSessionRecord {
+    id: string;
     user_id: string;
     expires_at: Date;
     is_remember_me?: boolean;
     csrf_token: string;
+    secret_hash: string;
 }
 
 interface SessionWithUserRow {
@@ -34,6 +37,7 @@ interface SessionWithUserRow {
     expires_at: Date;
     is_remember_me: boolean;
     csrf_token: string;
+    secret_hash: string;
     user_id_fk: string;
     user_email: string;
     user_role_id: string;
@@ -45,17 +49,19 @@ export class SessionRepository {
         client?: PoolClient
     ): Promise<Session> {
         const query = `
-            INSERT INTO sessions (user_id, expires_at, is_remember_me, csrf_token)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO sessions (id, user_id, expires_at, is_remember_me, csrf_token, secret_hash)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
         `;
 
         const executor = client ?? pool;
         const result = await executor.query<Session>(query, [
+            data.id,
             data.user_id,
             data.expires_at,
             data.is_remember_me ?? false,
             data.csrf_token,
+            data.secret_hash,
         ]);
 
         return result.rows[0]!;
@@ -75,6 +81,7 @@ export class SessionRepository {
                 sessions.expires_at,
                 sessions.is_remember_me,
                 sessions.csrf_token,
+                sessions.secret_hash,
                 users.id AS user_id_fk,
                 users.email AS user_email,
                 users.role_id AS user_role_id
@@ -112,6 +119,7 @@ export class SessionRepository {
             expires_at: row.expires_at,
             is_remember_me: row.is_remember_me,
             csrf_token: row.csrf_token,
+            secret_hash: row.secret_hash,
             user: {
                 id: row.user_id_fk,
                 email: row.user_email,

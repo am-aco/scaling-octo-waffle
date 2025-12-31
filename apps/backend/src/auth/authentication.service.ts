@@ -6,7 +6,7 @@ import { ValidationError, ConflictError } from "../infrastructure/errors.js";
 import { withTransaction } from "../infrastructure/database.js";
 import { SESSION_DURATION_DAYS, REMEMBER_ME_DURATION_DAYS } from "./auth.constants.js";
 import { verifyCredentials } from "./credential-verification.util.js";
-import { generateSecureToken } from "./token.util.js";
+import { generateSecureToken, generateSessionCredentials, hashToken } from "./token.util.js";
 
 export interface RegisterData {
     email: string;
@@ -26,6 +26,7 @@ export interface LoginData {
 }
 
 export interface LoginResult {
+    sessionToken: string;
     session: Session;
     user: {
         id: string;
@@ -82,19 +83,26 @@ export class AuthenticationService {
         expiresAt.setDate(expiresAt.getDate() + sessionDuration);
 
         const csrfToken = generateSecureToken();
+        const { id: sessionId, secret: sessionSecret } = generateSessionCredentials();
+        const secretHash = hashToken(sessionSecret);
 
         const session = await withTransaction(async (client) => {
             await this.userRepository.resetFailedLoginAttempts(user.id, client);
             await this.userRepository.updateLastLogin(user.id, client);
             return await this.sessionRepository.create({
+                id: sessionId,
                 user_id: user.id,
                 expires_at: expiresAt,
                 is_remember_me: isRememberMe,
                 csrf_token: csrfToken,
+                secret_hash: secretHash,
             }, client);
         });
 
+        const sessionToken = `${sessionId}.${sessionSecret}`;
+
         return {
+            sessionToken,
             session,
             user: {
                 id: user.id,

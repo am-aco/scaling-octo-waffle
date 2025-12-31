@@ -3,6 +3,7 @@ import { AuthenticationService } from "./authentication.service.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import { handleControllerError } from "../infrastructure/error-handler.util.js";
 import { COOKIE_OPTIONS, REMEMBER_ME_DURATION_MS, SESSION_COOKIE_NAME } from "./auth.constants.js";
+import { parseSessionToken } from "./token.util.js";
 
 export class AuthenticationController {
     constructor(private authenticationService: AuthenticationService) { }
@@ -57,7 +58,7 @@ export class AuthenticationController {
                 maxAge: result.session.is_remember_me ? REMEMBER_ME_DURATION_MS : COOKIE_OPTIONS.maxAge,
             };
 
-            res.cookie(SESSION_COOKIE_NAME, result.session.id, cookieOptions);
+            res.cookie(SESSION_COOKIE_NAME, result.sessionToken, cookieOptions);
 
             res.status(HTTP_STATUS.OK).json({
                 message: "Login successful",
@@ -72,10 +73,13 @@ export class AuthenticationController {
 
     logout = async (req: Request, res: Response): Promise<void> => {
         try {
-            const sessionId = req.cookies[SESSION_COOKIE_NAME];
+            const sessionToken = req.cookies[SESSION_COOKIE_NAME];
 
-            if (sessionId) {
-                await this.authenticationService.logout(sessionId);
+            if (sessionToken) {
+                const parsed = parseSessionToken(sessionToken);
+                if (parsed) {
+                    await this.authenticationService.logout(parsed.id);
+                }
             }
 
             res.clearCookie(SESSION_COOKIE_NAME);
