@@ -159,7 +159,8 @@ export function SignInForm({ onSwitchToSignUp, onSwitchToForgotPassword }: SignI
 
         <Button
           type="submit"
-          className="w-full h-12 text-base font-medium border-2 shadow-sm hover:shadow-md hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all"
+          size="xl"
+          className="w-full"
           disabled={isLoading}
         >
           {isLoading ? "Signing in..." : "Sign in"}
@@ -180,7 +181,8 @@ export function SignInForm({ onSwitchToSignUp, onSwitchToForgotPassword }: SignI
       <Button
         type="button"
         variant="outline"
-        className="w-full h-12 text-base font-medium border-2 opacity-60 cursor-not-allowed"
+        size="xl"
+        className="w-full"
         disabled
       >
         <Clock className="mr-2 h-4 w-4" />

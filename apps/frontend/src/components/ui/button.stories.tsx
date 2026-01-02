@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/react"
+import type { Meta, StoryObj } from "@storybook/react-vite"
 import { Button } from "./button"
-import { Mail, ArrowRight } from "lucide-react"
+import { Mail, ArrowRight, Plus, Settings, Trash2 } from "lucide-react"
 
 const meta: Meta<typeof Button> = {
   title: "UI/Button",
@@ -13,10 +13,20 @@ const meta: Meta<typeof Button> = {
     variant: {
       control: "select",
       options: ["default", "destructive", "outline", "secondary", "ghost", "link"],
+      description: "The visual style of the button",
     },
     size: {
       control: "select",
-      options: ["default", "sm", "lg", "icon"],
+      options: ["default", "sm", "lg", "xl", "icon", "icon-sm", "icon-lg"],
+      description: "The size of the button",
+    },
+    disabled: {
+      control: "boolean",
+      description: "Whether the button is disabled",
+    },
+    asChild: {
+      control: "boolean",
+      description: "Render as child element using Radix Slot",
     },
   },
 }
@@ -101,9 +111,43 @@ export const Large: Story = {
   },
 }
 
+export const ExtraLarge: Story = {
+  args: {
+    size: "xl",
+    children: "Extra Large",
+  },
+}
+
 export const Disabled: Story = {
   args: {
     disabled: true,
     children: "Disabled",
+  },
+}
+
+export const IconButton: Story = {
+  args: {
+    size: "icon",
+    variant: "outline",
+    children: <Plus />,
+    "aria-label": "Add item",
+  },
+}
+
+export const IconButtonSmall: Story = {
+  args: {
+    size: "icon-sm",
+    variant: "outline",
+    children: <Settings />,
+    "aria-label": "Settings",
+  },
+}
+
+export const IconButtonLarge: Story = {
+  args: {
+    size: "icon-lg",
+    variant: "destructive",
+    children: <Trash2 />,
+    "aria-label": "Delete",
   },
 }
