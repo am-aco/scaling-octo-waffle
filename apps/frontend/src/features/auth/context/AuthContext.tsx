@@ -1,98 +1,62 @@
 import {
-    useState,
-    useEffect,
-    useCallback,
     type ReactNode,
+    useCallback,
+    useMemo,
 } from "react";
-import { authApi } from "@/features/auth/api/auth.api";
-import { csrfStore } from "@/services/api/csrf";
+import { useQueryClient } from "@tanstack/react-query";
+import { useUser, useLogin, useRegister, useLogout, authKeys } from "../hooks/auth-queries";
 import type {
-  AuthContextValue,
-  AuthState,
-  LoginCredentials,
-  RegisterCredentials,
-  User,
+    AuthContextValue,
+    LoginCredentials,
+    RegisterCredentials,
 } from "@/features/auth/types/auth.types";
 import { AuthContext } from "./auth-context-def";
-
-const initialState: AuthState = {
-    user: null,
-    isAuthenticated: false,
-    isLoading: true,
-    csrfToken: null,
-    isRememberMe: false,
-};
 
 interface AuthProviderProps {
     children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-    const [state, setState] = useState<AuthState>(initialState);
+    const queryClient = useQueryClient();
 
-    const setUser = (
-        user: User | null,
-        csrfToken: string | null = null,
-        isRememberMe: boolean = false
-    ) => {
-        setState({
-            user,
-            isAuthenticated: !!user,
-            isLoading: false,
-            csrfToken,
-            isRememberMe,
-        });
-    };
+    /* Use React Query hooks */
+    const { data: profileData, isLoading: isUserLoading } = useUser();
+    const loginMutation = useLogin();
+    const registerMutation = useRegister();
+    const logoutMutation = useLogout();
 
-    const checkAuth = useCallback(async () => {
-        try {
-            setState((prev) => ({ ...prev, isLoading: true }));
-            const response = await authApi.getProfile();
-            csrfStore.setToken(response.csrfToken);
-            setUser(response.user, response.csrfToken, response.isRememberMe);
-        } catch {
-            csrfStore.clearToken();
-            setUser(null);
-        }
-    }, []);
+    const user = profileData?.user ?? null;
+    const isAuthenticated = !!user;
+    const csrfToken = profileData?.csrfToken ?? null;
+    const isRememberMe = profileData?.isRememberMe ?? false;
 
     const login = async (credentials: LoginCredentials) => {
-        const response = await authApi.login(credentials);
-        csrfStore.setToken(response.csrfToken);
-        setUser(response.user, response.csrfToken, response.isRememberMe);
-        return response;
+        return await loginMutation.mutateAsync(credentials);
     };
 
     const register = async (credentials: RegisterCredentials) => {
-        const response = await authApi.register(credentials);
-        csrfStore.setToken(response.csrfToken);
-        setUser(response.user, response.csrfToken, response.isRememberMe);
-        return response;
+        return await registerMutation.mutateAsync(credentials);
     };
 
     const logout = async () => {
-        try {
-            await authApi.logout();
-        } catch (error) {
-            // Ignore logout errors (e.g., if session is already invalid)
-            console.error("Logout API call failed", error);
-        } finally {
-            csrfStore.clearToken();
-            setUser(null);
-        }
+        await logoutMutation.mutateAsync();
     };
 
-    useEffect(() => {
-        checkAuth();
-    }, [checkAuth]);
+    const checkAuth = useCallback(async () => {
+        await queryClient.invalidateQueries({ queryKey: authKeys.user() });
+    }, [queryClient]);
 
-    const value: AuthContextValue = {
-        ...state,
+    const value: AuthContextValue = useMemo(() => ({
+        user,
+        isAuthenticated,
+        isLoading: isUserLoading,
+        csrfToken,
+        isRememberMe,
         login,
         register,
         logout,
         checkAuth,
-    };
+    }), [user, isAuthenticated, isUserLoading, csrfToken, isRememberMe, checkAuth, loginMutation, registerMutation, logoutMutation]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
