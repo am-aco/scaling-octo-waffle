@@ -4,18 +4,20 @@ import { useAuth } from "@/features/auth";
 import { LogOut, Shield, User, FileText, Eye, Pencil, Trash2, PlusCircle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
-const MOCK_PERMISSIONS = [
-  { id: "profile:read", label: "profile:read", description: "View own profile", icon: User },
-  { id: "profile:update", label: "profile:update", description: "Update own profile", icon: Pencil },
-  { id: "users:read", label: "users:read", description: "View all users", icon: Eye },
-  { id: "users:update", label: "users:update", description: "Update any user", icon: Pencil },
-  { id: "users:delete", label: "users:delete", description: "Delete any user", icon: Trash2 },
-  { id: "posts:create", label: "posts:create", description: "Create new posts", icon: PlusCircle },
-  { id: "posts:read", label: "posts:read", description: "View all posts", icon: FileText },
-  { id: "posts:update", label: "posts:update", description: "Update any post", icon: Pencil },
-  { id: "posts:delete", label: "posts:delete", description: "Delete any post", icon: Trash2 },
-  { id: "posts:moderate", label: "posts:moderate", description: "Moderate posts", icon: ShieldCheck },
-];
+/* Metadata for known permissions to display nice icons and descriptions */
+const PERMISSION_METADATA: Record<string, { label: string; description: string; icon: any }> = {
+  "profile:read": { label: "profile:read", description: "View own profile", icon: User },
+  "profile:update": { label: "profile:update", description: "Update own profile", icon: Pencil },
+  "users:read": { label: "users:read", description: "View all users", icon: Eye },
+  "users:create": { label: "users:create", description: "Create new users", icon: PlusCircle },
+  "users:update": { label: "users:update", description: "Update any user", icon: Pencil },
+  "users:delete": { label: "users:delete", description: "Delete any user", icon: Trash2 },
+  "posts:create": { label: "posts:create", description: "Create new posts", icon: PlusCircle },
+  "posts:read": { label: "posts:read", description: "View all posts", icon: FileText },
+  "posts:update": { label: "posts:update", description: "Update any post", icon: Pencil },
+  "posts:delete": { label: "posts:delete", description: "Delete any post", icon: Trash2 },
+  "posts:moderate": { label: "posts:moderate", description: "Moderate posts", icon: ShieldCheck },
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -32,6 +34,10 @@ const Dashboard = () => {
   };
 
   const displayName = user?.email?.split("@")[0] || "User";
+  const userPermissions = user?.permissions || [];
+  
+  /* Naive check: If they have 'users:delete', they are likely an admin in our simple model */
+  const isAdmin = userPermissions.includes("users:delete");
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,28 +68,46 @@ const Dashboard = () => {
             <div className="flex items-center gap-3">
               <Shield className="h-5 w-5" />
               <h2 className="text-xl font-semibold">Your Permissions</h2>
-              <span className="px-2 py-1 text-xs font-medium border-2 border-foreground bg-primary text-primary-foreground">
-                admin
+              <span className={`px-2 py-1 text-xs font-medium border-2 ${isAdmin 
+                ? "border-foreground bg-primary text-primary-foreground" 
+                : "border-muted-foreground bg-secondary text-secondary-foreground"
+              }`}>
+                {isAdmin ? "admin" : "user"}
               </span>
             </div>
 
             <div className="grid gap-4">
-              {MOCK_PERMISSIONS.map((permission) => (
-                <div
-                  key={permission.id}
-                  className="flex items-start gap-4 p-4 border-2 border-border bg-card"
-                >
-                  <div className="w-10 h-10 border-2 border-border flex items-center justify-center shrink-0">
-                    <permission.icon className="h-5 w-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-mono text-sm font-medium">{permission.label}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {permission.description}
-                    </p>
-                  </div>
+              {userPermissions.length > 0 ? (
+                userPermissions.map((permissionName) => {
+                  const meta = PERMISSION_METADATA[permissionName] || {
+                    label: permissionName,
+                    description: "Custom permission",
+                    icon: Shield
+                  };
+                  const Icon = meta.icon;
+
+                  return (
+                    <div
+                      key={permissionName}
+                      className="flex items-start gap-4 p-4 border-2 border-border bg-card"
+                    >
+                      <div className="w-10 h-10 border-2 border-border flex items-center justify-center shrink-0">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="font-mono text-sm font-medium">{meta.label}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {meta.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-8 text-center border-2 border-dashed border-muted text-muted-foreground">
+                  No permissions assigned to this account.
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
