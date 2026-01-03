@@ -5,7 +5,7 @@ export const loginSchema = z.object({
         .string()
         .trim()
         .min(1, { message: "Email is required" })
-        .pipe(z.email({ message: "Invalid email format" })),
+        .email({ message: "Invalid email format" }),
     password: z
         .string()
         .min(1, { message: "Password is required" })
@@ -19,7 +19,7 @@ export const registerSchema = z
             .string()
             .trim()
             .min(1, { message: "Email is required" })
-            .pipe(z.email({ message: "Invalid email format" })),
+            .email({ message: "Invalid email format" }),
         password: z
             .string()
             .min(1, { message: "Password is required" })
@@ -38,7 +38,7 @@ export const forgotPasswordSchema = z.object({
         .string()
         .trim()
         .min(1, { message: "Email is required" })
-        .pipe(z.email({ message: "Invalid email format" })),
+        .email({ message: "Invalid email format" }),
 });
 
 export const resetPasswordSchema = z
