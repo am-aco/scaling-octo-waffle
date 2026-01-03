@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,72 +10,39 @@ import { toast } from "sonner";
 import { Mail, Lock, Eye, EyeOff, Clock } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { handleApiError } from "@/lib/error-utils";
+import { loginSchema, type LoginSchema } from "@/features/auth/schemas/auth.schemas";
 
 interface SignInFormProps {
     onSwitchToSignUp: () => void;
     onSwitchToForgotPassword: () => void;
 }
 
-interface FieldErrors {
-    email?: string;
-    password?: string;
-}
-
 export function SignInForm({ onSwitchToSignUp, onSwitchToForgotPassword }: SignInFormProps) {
     const navigate = useNavigate();
     const { login } = useAuth();
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState<FieldErrors>({});
-    const [touched, setTouched] = useState<{ email?: boolean; password?: boolean }>({});
 
-    const validateEmail = (value: string) => {
-        if (!value.trim()) return "Email is required";
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Please enter a valid email";
-        return undefined;
-    };
+    const {
+        register,
+        control,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+    } = useForm<LoginSchema>({
+        resolver: zodResolver(loginSchema),
+        defaultValues: {
+            email: "",
+            password: "",
+            rememberMe: false,
+        },
+    });
 
-    const validatePassword = (value: string) => {
-        if (!value) return "Password is required";
-        if (value.length < 8) return "Password must be at least 8 characters";
-        return undefined;
-    };
-
-    const handleBlur = (field: "email" | "password") => {
-        setTouched((prev) => ({ ...prev, [field]: true }));
-        if (field === "email") {
-            setErrors((prev) => ({ ...prev, email: validateEmail(email) }));
-        } else {
-            setErrors((prev) => ({ ...prev, password: validatePassword(password) }));
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        const emailError = validateEmail(email);
-        const passwordError = validatePassword(password);
-
-        setErrors({ email: emailError, password: passwordError });
-        setTouched({ email: true, password: true });
-
-        if (emailError || passwordError) {
-            return;
-        }
-
-        setIsLoading(true);
-
+    const onSubmit = async (data: LoginSchema) => {
         try {
-            const response = await login({ email, password, rememberMe });
+            const response = await login(data);
             toast.success(response.message, { id: "signin-success" });
             navigate("/dashboard");
         } catch (error) {
             handleApiError(error, "signin-error");
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -86,7 +55,7 @@ export function SignInForm({ onSwitchToSignUp, onSwitchToForgotPassword }: SignI
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
@@ -96,19 +65,12 @@ export function SignInForm({ onSwitchToSignUp, onSwitchToForgotPassword }: SignI
                                 id="email"
                                 type="email"
                                 placeholder="name@example.com"
-                                value={email}
-                                onChange={(e) => {
-                                    setEmail(e.target.value);
-                                    if (touched.email) {
-                                        setErrors((prev) => ({ ...prev, email: validateEmail(e.target.value) }));
-                                    }
-                                }}
-                                onBlur={() => handleBlur("email")}
-                                className={`pl-10 h-12 border-2 ${touched.email && errors.email ? "border-destructive" : ""}`}
+                                {...register("email")}
+                                className={`pl-10 h-12 border-2 ${errors.email ? "border-destructive" : ""}`}
                             />
                         </div>
-                        {touched.email && errors.email && (
-                            <p className="text-sm text-destructive">{errors.email}</p>
+                        {errors.email && (
+                            <p className="text-sm text-destructive">{errors.email.message}</p>
                         )}
                     </div>
 
@@ -120,15 +82,8 @@ export function SignInForm({ onSwitchToSignUp, onSwitchToForgotPassword }: SignI
                                 id="password"
                                 type={showPassword ? "text" : "password"}
                                 placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => {
-                                    setPassword(e.target.value);
-                                    if (touched.password) {
-                                        setErrors((prev) => ({ ...prev, password: validatePassword(e.target.value) }));
-                                    }
-                                }}
-                                onBlur={() => handleBlur("password")}
-                                className={`pl-10 pr-10 h-12 border-2 ${touched.password && errors.password ? "border-destructive" : ""}`}
+                                {...register("password")}
+                                className={`pl-10 pr-10 h-12 border-2 ${errors.password ? "border-destructive" : ""}`}
                             />
                             <button
                                 type="button"
@@ -138,18 +93,24 @@ export function SignInForm({ onSwitchToSignUp, onSwitchToForgotPassword }: SignI
                                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </button>
                         </div>
-                        {touched.password && errors.password && (
-                            <p className="text-sm text-destructive">{errors.password}</p>
+                        {errors.password && (
+                            <p className="text-sm text-destructive">{errors.password.message}</p>
                         )}
                     </div>
                 </div>
 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <Checkbox
-                            id="remember"
-                            checked={rememberMe}
-                            onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                        <Controller
+                            control={control}
+                            name="rememberMe"
+                            render={({ field }) => (
+                                <Checkbox
+                                    id="remember"
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            )}
                         />
                         <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
                             Remember me
@@ -168,9 +129,9 @@ export function SignInForm({ onSwitchToSignUp, onSwitchToForgotPassword }: SignI
                     type="submit"
                     size="xl"
                     className="w-full"
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                 >
-                    {isLoading ? "Signing in..." : "Sign in"}
+                    {isSubmitting ? "Signing in..." : "Sign in"}
                 </Button>
             </form>
 

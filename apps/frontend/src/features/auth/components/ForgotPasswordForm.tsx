@@ -1,33 +1,42 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, ArrowLeft } from "lucide-react";
 import { authApi } from "@/features/auth/api/auth.api";
 import { handleApiError } from "@/lib/error-utils";
+import { forgotPasswordSchema, type ForgotPasswordSchema } from "@/features/auth/schemas/auth.schemas";
 
 interface ForgotPasswordFormProps {
     onSwitchToSignIn: () => void;
 }
 
 export function ForgotPasswordForm({ onSwitchToSignIn }: ForgotPasswordFormProps) {
-    const [email, setEmail] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [successMessage, setSuccessMessage] = useState("");
+    const [submittedEmail, setSubmittedEmail] = useState("");
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+    } = useForm<ForgotPasswordSchema>({
+        resolver: zodResolver(forgotPasswordSchema),
+        defaultValues: {
+            email: "",
+        },
+    });
 
+    const onSubmit = async (data: ForgotPasswordSchema) => {
         try {
-            const response = await authApi.requestPasswordReset({ email });
+            const response = await authApi.requestPasswordReset({ email: data.email });
             setSuccessMessage(response.message);
+            setSubmittedEmail(data.email);
             setIsSubmitted(true);
         } catch (error) {
             handleApiError(error, "forgot-password-error");
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -42,7 +51,7 @@ export function ForgotPasswordForm({ onSwitchToSignIn }: ForgotPasswordFormProps
                     <p className="text-muted-foreground whitespace-pre-line">
                         {successMessage}
                         <br />
-                        <span className="font-medium text-foreground">{email}</span>
+                        <span className="font-medium text-foreground">{submittedEmail}</span>
                     </p>
                 </div>
 
@@ -79,7 +88,7 @@ export function ForgotPasswordForm({ onSwitchToSignIn }: ForgotPasswordFormProps
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-2">
                     <Label htmlFor="reset-email">Email</Label>
                     <div className="relative transition-all focus-within:shadow-sm focus-within:-translate-x-0.5 focus-within:-translate-y-0.5">
@@ -88,21 +97,22 @@ export function ForgotPasswordForm({ onSwitchToSignIn }: ForgotPasswordFormProps
                             id="reset-email"
                             type="email"
                             placeholder="name@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="pl-10 h-12 border-2"
-                            required
+                            {...register("email")}
+                            className={`pl-10 h-12 border-2 ${errors.email ? "border-destructive" : ""}`}
                         />
                     </div>
+                    {errors.email && (
+                        <p className="text-sm text-destructive">{errors.email.message}</p>
+                    )}
                 </div>
 
                 <Button
                     type="submit"
                     size="xl"
                     className="w-full"
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                 >
-                    {isLoading ? "Sending..." : "Send reset link"}
+                    {isSubmitting ? "Sending..." : "Send reset link"}
                 </Button>
             </form>
 

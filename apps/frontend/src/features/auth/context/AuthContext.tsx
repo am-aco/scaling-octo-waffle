@@ -1,5 +1,4 @@
 import {
-    createContext,
     useState,
     useEffect,
     useCallback,
@@ -14,14 +13,14 @@ import type {
   RegisterCredentials,
   User,
 } from "@/features/auth/types/auth.types";
+import { AuthContext } from "./auth-context-def";
+
 const initialState: AuthState = {
     user: null,
     isAuthenticated: false,
     isLoading: true,
     csrfToken: null,
 };
-
-export const AuthContext = createContext<AuthContextValue | null>(null);
 
 interface AuthProviderProps {
     children: ReactNode;
@@ -79,7 +78,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     useEffect(() => {
         checkAuth();
-    }, []);
+    }, [checkAuth]);
 
     const value: AuthContextValue = {
         ...state,

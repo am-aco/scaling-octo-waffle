@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,80 +10,33 @@ import { Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { authApi } from "@/features/auth/api/auth.api";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { handleApiError } from "@/lib/error-utils";
+import { resetPasswordSchema, type ResetPasswordSchema } from "@/features/auth/schemas/auth.schemas";
 
 interface ResetPasswordFormProps {
     token: string;
 }
 
-interface FieldErrors {
-    password?: string;
-    confirmPassword?: string;
-}
-
-interface TouchedFields {
-    password?: boolean;
-    confirmPassword?: boolean;
-}
-
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     const navigate = useNavigate();
     const { logout } = useAuth();
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState<FieldErrors>({});
-    const [touched, setTouched] = useState<TouchedFields>({});
 
-    const validatePassword = (value: string) => {
-        if (!value) return "Password is required";
-        if (value.length < 8) return "Password must be at least 8 characters";
-        return undefined;
-    };
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+    } = useForm<ResetPasswordSchema>({
+        resolver: zodResolver(resetPasswordSchema),
+        defaultValues: {
+            password: "",
+            confirmPassword: "",
+        },
+    });
 
-    const validateConfirmPassword = (value: string, pwd: string) => {
-        if (!value) return "Please confirm your password";
-        if (value !== pwd) return "Passwords don't match";
-        return undefined;
-    };
-
-    const handleBlur = (field: keyof TouchedFields) => {
-        setTouched((prev) => ({ ...prev, [field]: true }));
-
-        switch (field) {
-            case "password":
-                setErrors((prev) => ({ ...prev, password: validatePassword(password) }));
-                break;
-            case "confirmPassword":
-                setErrors((prev) => ({
-                    ...prev,
-                    confirmPassword: validateConfirmPassword(confirmPassword, password),
-                }));
-                break;
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        const passwordError = validatePassword(password);
-        const confirmPasswordError = validateConfirmPassword(confirmPassword, password);
-
-        setErrors({
-            password: passwordError,
-            confirmPassword: confirmPasswordError,
-        });
-        setTouched({ password: true, confirmPassword: true });
-
-        if (passwordError || confirmPasswordError) {
-            return;
-        }
-
-        setIsLoading(true);
-
+    const onSubmit = async (data: ResetPasswordSchema) => {
         try {
-            const response = await authApi.resetPassword({ token, newPassword: password });
+            const response = await authApi.resetPassword({ token, newPassword: data.password });
             await logout();
             toast.success(response.message, {
                 id: "reset-password-success",
@@ -89,8 +44,6 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             navigate("/auth");
         } catch (error) {
             handleApiError(error, "reset-password-error");
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -103,7 +56,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="new-password">New password</Label>
@@ -113,18 +66,8 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                                 id="new-password"
                                 type={showPassword ? "text" : "password"}
                                 placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => {
-                                    setPassword(e.target.value);
-                                    if (touched.password) {
-                                        setErrors((prev) => ({
-                                            ...prev,
-                                            password: validatePassword(e.target.value),
-                                        }));
-                                    }
-                                }}
-                                onBlur={() => handleBlur("password")}
-                                className={`pl-10 pr-10 h-12 border-2 ${touched.password && errors.password ? "border-destructive" : ""
+                                {...register("password")}
+                                className={`pl-10 pr-10 h-12 border-2 ${errors.password ? "border-destructive" : ""
                                     }`}
                             />
                             <button
@@ -139,8 +82,8 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                                 )}
                             </button>
                         </div>
-                        {touched.password && errors.password && (
-                            <p className="text-sm text-destructive">{errors.password}</p>
+                        {errors.password && (
+                            <p className="text-sm text-destructive">{errors.password.message}</p>
                         )}
                     </div>
 
@@ -152,20 +95,10 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                                 id="confirm-new-password"
                                 type={showConfirmPassword ? "text" : "password"}
                                 placeholder="••••••••"
-                                value={confirmPassword}
-                                onChange={(e) => {
-                                    setConfirmPassword(e.target.value);
-                                    if (touched.confirmPassword) {
-                                        setErrors((prev) => ({
-                                            ...prev,
-                                            confirmPassword: validateConfirmPassword(e.target.value, password),
-                                        }));
-                                    }
-                                }}
-                                onBlur={() => handleBlur("confirmPassword")}
-                                className={`pl-10 pr-10 h-12 border-2 ${touched.confirmPassword && errors.confirmPassword
-                                    ? "border-destructive"
-                                    : ""
+                                {...register("confirmPassword")}
+                                className={`pl-10 pr-10 h-12 border-2 ${errors.confirmPassword
+                                        ? "border-destructive"
+                                        : ""
                                     }`}
                             />
                             <button
@@ -180,14 +113,14 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                                 )}
                             </button>
                         </div>
-                        {touched.confirmPassword && errors.confirmPassword && (
-                            <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                        {errors.confirmPassword && (
+                            <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
                         )}
                     </div>
                 </div>
 
-                <Button type="submit" size="xl" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Resetting..." : "Reset password"}
+                <Button type="submit" size="xl" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? "Resetting..." : "Reset password"}
                 </Button>
             </form>
 
@@ -202,3 +135,4 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         </div>
     );
 }
+
