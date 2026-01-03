@@ -56,6 +56,23 @@ export class PasswordResetService {
         });
     }
 
+    async validateToken(token: string): Promise<void> {
+        const tokenHash = hashToken(token);
+        const resetToken = await this.resetTokenRepository.findByToken(tokenHash);
+
+        if (!resetToken) {
+            throw new ValidationError('Invalid or expired reset token');
+        }
+
+        if (resetToken.used_at) {
+            throw new ValidationError('Reset token has already been used');
+        }
+
+        if (resetToken.expires_at < new Date()) {
+            throw new ValidationError('Reset token has expired');
+        }
+    }
+
     async resetPassword(data: PasswordResetConfirmation): Promise<void> {
         const tokenHash = hashToken(data.token);
         const resetToken = await this.resetTokenRepository.findByToken(tokenHash);

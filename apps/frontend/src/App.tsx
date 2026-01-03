@@ -4,6 +4,7 @@ import { AuthProvider, ProtectedRoute, GuestRoute } from "@/features/auth";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
+import ResetPassword from "@/pages/ResetPassword";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
         <Toaster />
       </AuthProvider>

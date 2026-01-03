@@ -47,6 +47,14 @@ export interface MessageResponse {
   message: string;
 }
 
+export interface TokenValidationPayload {
+  token: string;
+}
+
+export interface TokenValidationResponse {
+  valid: boolean;
+}
+
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;

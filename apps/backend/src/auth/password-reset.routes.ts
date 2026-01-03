@@ -21,6 +21,7 @@ export function createPasswordResetRouter(deps: PasswordResetRouterDependencies)
         : [controller.resetPassword];
 
     router.post("/request", ...requestMiddleware);
+    router.post("/validate", controller.validateToken);
     router.post("/reset", ...resetMiddleware);
 
     return router;

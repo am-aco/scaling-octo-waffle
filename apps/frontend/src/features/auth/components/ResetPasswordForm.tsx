@@ -4,43 +4,34 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Mail, Lock, Eye, EyeOff, Clock } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
+import { Lock, Eye, EyeOff, CheckCircle, ArrowLeft } from "lucide-react";
+import { authApi } from "../api/auth.api";
 import { ApiClientError } from "@/services/api/client";
 
-interface SignUpFormProps {
-  onSwitchToSignIn: () => void;
+interface ResetPasswordFormProps {
+  token: string;
 }
 
 interface FieldErrors {
-  email?: string;
   password?: string;
   confirmPassword?: string;
 }
 
 interface TouchedFields {
-  email?: boolean;
   password?: boolean;
   confirmPassword?: boolean;
 }
 
-export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
+export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const navigate = useNavigate();
-  const { register } = useAuth();
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<TouchedFields>({});
-
-  const validateEmail = (value: string) => {
-    if (!value.trim()) return "Email is required";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Please enter a valid email";
-    return undefined;
-  };
 
   const validatePassword = (value: string) => {
     if (!value) return "Password is required";
@@ -58,14 +49,14 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
     setTouched((prev) => ({ ...prev, [field]: true }));
 
     switch (field) {
-      case "email":
-        setErrors((prev) => ({ ...prev, email: validateEmail(email) }));
-        break;
       case "password":
         setErrors((prev) => ({ ...prev, password: validatePassword(password) }));
         break;
       case "confirmPassword":
-        setErrors((prev) => ({ ...prev, confirmPassword: validateConfirmPassword(confirmPassword, password) }));
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: validateConfirmPassword(confirmPassword, password),
+        }));
         break;
     }
   };
@@ -73,27 +64,25 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
     const confirmPasswordError = validateConfirmPassword(confirmPassword, password);
 
     setErrors({
-      email: emailError,
       password: passwordError,
       confirmPassword: confirmPasswordError,
     });
-    setTouched({ email: true, password: true, confirmPassword: true });
+    setTouched({ password: true, confirmPassword: true });
 
-    if (emailError || passwordError || confirmPasswordError) {
+    if (passwordError || confirmPasswordError) {
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await register({ email, password });
-      toast.success("Account created successfully!");
-      navigate("/dashboard");
+      await authApi.resetPassword({ token, newPassword: password });
+      setIsSuccess(true);
+      toast.success("Password reset successfully!");
     } catch (error) {
       if (error instanceof ApiClientError) {
         toast.error(error.message);
@@ -105,100 +94,119 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
     }
   };
 
+  if (isSuccess) {
+    return (
+      <div className="space-y-8">
+        <div className="space-y-2 text-center">
+          <div className="mx-auto w-16 h-16 border-2 border-border flex items-center justify-center mb-6">
+            <CheckCircle className="h-8 w-8" />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight">Password reset</h1>
+          <p className="text-muted-foreground">
+            Your password has been successfully reset.
+            <br />
+            You can now sign in with your new password.
+          </p>
+        </div>
+
+        <Button
+          type="button"
+          size="xl"
+          className="w-full"
+          onClick={() => navigate("/auth")}
+        >
+          Go to sign in
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">Create an account</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Set new password</h1>
         <p className="text-muted-foreground">
-          Enter your details to get started
+          Your new password must be at least 8 characters
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="signup-email">Email</Label>
-            <div className="relative transition-all focus-within:shadow-sm focus-within:-translate-x-0.5 focus-within:-translate-y-0.5">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="signup-email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (touched.email) {
-                    setErrors((prev) => ({ ...prev, email: validateEmail(e.target.value) }));
-                  }
-                }}
-                onBlur={() => handleBlur("email")}
-                className={`pl-10 h-12 border-2 ${touched.email && errors.email ? "border-destructive" : ""}`}
-              />
-            </div>
-            {touched.email && errors.email && (
-              <p className="text-sm text-destructive">{errors.email}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="signup-password">Password</Label>
+            <Label htmlFor="new-password">New password</Label>
             <div className="relative transition-all focus-within:shadow-sm focus-within:-translate-x-0.5 focus-within:-translate-y-0.5">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="signup-password"
+                id="new-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
                   if (touched.password) {
-                    setErrors((prev) => ({ ...prev, password: validatePassword(e.target.value) }));
+                    setErrors((prev) => ({
+                      ...prev,
+                      password: validatePassword(e.target.value),
+                    }));
                   }
                 }}
                 onBlur={() => handleBlur("password")}
-                className={`pl-10 pr-10 h-12 border-2 ${touched.password && errors.password ? "border-destructive" : ""}`}
+                className={`pl-10 pr-10 h-12 border-2 ${
+                  touched.password && errors.password ? "border-destructive" : ""
+                }`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </button>
             </div>
-            {touched.password && errors.password ? (
+            {touched.password && errors.password && (
               <p className="text-sm text-destructive">{errors.password}</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Must be at least 8 characters
-              </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirm-password">Confirm Password</Label>
+            <Label htmlFor="confirm-new-password">Confirm new password</Label>
             <div className="relative transition-all focus-within:shadow-sm focus-within:-translate-x-0.5 focus-within:-translate-y-0.5">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="confirm-password"
+                id="confirm-new-password"
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
                   if (touched.confirmPassword) {
-                    setErrors((prev) => ({ ...prev, confirmPassword: validateConfirmPassword(e.target.value, password) }));
+                    setErrors((prev) => ({
+                      ...prev,
+                      confirmPassword: validateConfirmPassword(e.target.value, password),
+                    }));
                   }
                 }}
                 onBlur={() => handleBlur("confirmPassword")}
-                className={`pl-10 pr-10 h-12 border-2 ${touched.confirmPassword && errors.confirmPassword ? "border-destructive" : ""}`}
+                className={`pl-10 pr-10 h-12 border-2 ${
+                  touched.confirmPassword && errors.confirmPassword
+                    ? "border-destructive"
+                    : ""
+                }`}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
-                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </button>
             </div>
             {touched.confirmPassword && errors.confirmPassword && (
@@ -207,48 +215,19 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
           </div>
         </div>
 
-        <Button
-          type="submit"
-          size="xl"
-          className="w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? "Creating account..." : "Create account"}
+        <Button type="submit" size="xl" className="w-full" disabled={isLoading}>
+          {isLoading ? "Resetting..." : "Reset password"}
         </Button>
       </form>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t-2 border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-4 text-muted-foreground">
-            Or continue with
-          </span>
-        </div>
-      </div>
-
-      <Button
+      <button
         type="button"
-        variant="outline"
-        size="xl"
-        className="w-full"
-        disabled
+        onClick={() => navigate("/auth")}
+        className="w-full flex items-center justify-center gap-2 text-sm font-medium cursor-pointer hover:underline underline-offset-4"
       >
-        <Clock className="mr-2 h-4 w-4" />
-        Google sign-up coming soon
-      </Button>
-
-      <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <button
-          type="button"
-          onClick={onSwitchToSignIn}
-          className="font-medium text-foreground cursor-pointer hover:underline underline-offset-4"
-        >
-          Sign in
-        </button>
-      </p>
+        <ArrowLeft className="h-4 w-4" />
+        Back to sign in
+      </button>
     </div>
   );
 }

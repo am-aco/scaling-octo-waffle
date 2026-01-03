@@ -35,6 +35,27 @@ export class PasswordResetController {
         }
     };
 
+    validateToken = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const { token } = req.body;
+
+            if (!token || typeof token !== "string") {
+                res.status(HTTP_STATUS.BAD_REQUEST).json({
+                    error: "Reset token is required",
+                });
+                return;
+            }
+
+            await this.passwordResetService.validateToken(token);
+
+            res.status(HTTP_STATUS.OK).json({
+                valid: true,
+            });
+        } catch (error) {
+            handleControllerError(error, req, res, "Token validation error");
+        }
+    };
+
     resetPassword = async (req: Request, res: Response): Promise<void> => {
         try {
             const { token, newPassword } = req.body;

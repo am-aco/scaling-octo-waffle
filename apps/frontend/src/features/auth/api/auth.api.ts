@@ -8,6 +8,8 @@ import type {
   PasswordResetRequestPayload,
   PasswordResetPayload,
   MessageResponse,
+  TokenValidationPayload,
+  TokenValidationResponse,
 } from "../types/auth.types";
 
 export const authApi = {
@@ -38,5 +40,9 @@ export const authApi = {
 
   resetPassword: (payload: PasswordResetPayload): Promise<MessageResponse> => {
     return apiClient.post<MessageResponse>("/auth/password-reset/reset", payload);
+  },
+
+  validateResetToken: (payload: TokenValidationPayload): Promise<TokenValidationResponse> => {
+    return apiClient.post<TokenValidationResponse>("/auth/password-reset/validate", payload);
   },
 };
