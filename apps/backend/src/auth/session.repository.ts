@@ -128,6 +128,16 @@ export class SessionRepository {
         };
     }
 
+    async updateExpiration(
+        sessionId: string,
+        expiresAt: Date,
+        client?: PoolClient
+    ): Promise<void> {
+        const query = "UPDATE sessions SET expires_at = $1 WHERE id = $2";
+        const executor = client ?? pool;
+        await executor.query(query, [expiresAt, sessionId]);
+    }
+
     async deleteById(sessionId: string, client?: PoolClient): Promise<void> {
         const query = "DELETE FROM sessions WHERE id = $1";
         const executor = client ?? pool;

@@ -21,17 +21,20 @@ export interface LoginResponse {
     user: User;
     message: string;
     csrfToken: string;
+    isRememberMe: boolean;
 }
 
 export interface RegisterResponse {
     user: User;
     message: string;
     csrfToken: string;
+    isRememberMe: boolean;
 }
 
 export interface ProfileResponse {
     user: User;
     csrfToken: string;
+    isRememberMe: boolean;
 }
 
 export interface PasswordResetRequestPayload {
@@ -60,6 +63,7 @@ export interface AuthState {
     isAuthenticated: boolean;
     isLoading: boolean;
     csrfToken: string | null;
+    isRememberMe: boolean;
 }
 
 export interface AuthContextValue extends AuthState {

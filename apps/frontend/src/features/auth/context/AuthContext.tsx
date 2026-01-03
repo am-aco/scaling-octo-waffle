@@ -20,6 +20,7 @@ const initialState: AuthState = {
     isAuthenticated: false,
     isLoading: true,
     csrfToken: null,
+    isRememberMe: false,
 };
 
 interface AuthProviderProps {
@@ -29,12 +30,17 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
     const [state, setState] = useState<AuthState>(initialState);
 
-    const setUser = (user: User | null, csrfToken: string | null = null) => {
+    const setUser = (
+        user: User | null,
+        csrfToken: string | null = null,
+        isRememberMe: boolean = false
+    ) => {
         setState({
             user,
             isAuthenticated: !!user,
             isLoading: false,
             csrfToken,
+            isRememberMe,
         });
     };
 
@@ -43,7 +49,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setState((prev) => ({ ...prev, isLoading: true }));
             const response = await authApi.getProfile();
             csrfStore.setToken(response.csrfToken);
-            setUser(response.user, response.csrfToken);
+            setUser(response.user, response.csrfToken, response.isRememberMe);
         } catch {
             csrfStore.clearToken();
             setUser(null);
@@ -53,14 +59,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const login = async (credentials: LoginCredentials) => {
         const response = await authApi.login(credentials);
         csrfStore.setToken(response.csrfToken);
-        setUser(response.user, response.csrfToken);
+        setUser(response.user, response.csrfToken, response.isRememberMe);
         return response;
     };
 
     const register = async (credentials: RegisterCredentials) => {
         const response = await authApi.register(credentials);
         csrfStore.setToken(response.csrfToken);
-        setUser(response.user, response.csrfToken);
+        setUser(response.user, response.csrfToken, response.isRememberMe);
         return response;
     };
 

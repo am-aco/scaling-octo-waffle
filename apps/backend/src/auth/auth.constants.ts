@@ -12,7 +12,8 @@ export const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: config.nodeEnv === "production",
     sameSite: "strict" as const,
-    maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000,
+    /* Default to session cookie (expires when browser closes) */
+    maxAge: undefined as number | undefined,
 };
 
 export const MAX_LOGIN_ATTEMPTS = 5;

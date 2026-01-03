@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { AuthenticationService } from "./authentication.service.js";
 import { HTTP_STATUS } from "../infrastructure/http.js";
 import { handleControllerError } from "../infrastructure/error-handler.util.js";
-import { COOKIE_OPTIONS, REMEMBER_ME_DURATION_MS, SESSION_COOKIE_NAME } from "./auth.constants.js";
+import { COOKIE_OPTIONS, REMEMBER_ME_DURATION_MS, SESSION_COOKIE_NAME, SESSION_DURATION_DAYS } from "./auth.constants.js";
 import { parseSessionToken } from "./token.util.js";
 
 export class AuthenticationController {
@@ -32,6 +32,7 @@ export class AuthenticationController {
                 message: "User registered successfully",
                 user: result.user,
                 csrfToken: result.session.csrf_token,
+                isRememberMe: result.session.is_remember_me,
             });
         }
         catch (error) {
@@ -58,7 +59,9 @@ export class AuthenticationController {
 
             const cookieOptions = {
                 ...COOKIE_OPTIONS,
-                maxAge: result.session.is_remember_me ? REMEMBER_ME_DURATION_MS : COOKIE_OPTIONS.maxAge,
+                maxAge: result.session.is_remember_me 
+                    ? REMEMBER_ME_DURATION_MS 
+                    : SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000,
             };
 
             res.cookie(SESSION_COOKIE_NAME, result.sessionToken, cookieOptions);
@@ -67,6 +70,7 @@ export class AuthenticationController {
                 message: "Login successful",
                 user: result.user,
                 csrfToken: result.session.csrf_token,
+                isRememberMe: result.session.is_remember_me,
             });
         }
         catch (error) {
@@ -100,6 +104,7 @@ export class AuthenticationController {
         res.status(HTTP_STATUS.OK).json({
             user: req.user,
             csrfToken: req.session?.csrfToken,
+            isRememberMe: req.session?.isRememberMe ?? false,
         });
     };
 }
