@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Lock, Eye, EyeOff, CheckCircle, ArrowLeft } from "lucide-react";
 import { authApi } from "../api/auth.api";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ApiClientError } from "@/services/api/client";
 
 interface ResetPasswordFormProps {
@@ -24,6 +25,7 @@ interface TouchedFields {
 
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -81,6 +83,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
     try {
       await authApi.resetPassword({ token, newPassword: password });
+      await logout();
       setIsSuccess(true);
       toast.success("Password reset successfully!");
     } catch (error) {

@@ -65,9 +65,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = async () => {
-    await authApi.logout();
-    csrfStore.clearToken();
-    setUser(null);
+    try {
+      await authApi.logout();
+    } catch (error) {
+      // Ignore logout errors (e.g., if session is already invalid)
+      console.error("Logout API call failed", error);
+    } finally {
+      csrfStore.clearToken();
+      setUser(null);
+    }
   };
 
   useEffect(() => {
