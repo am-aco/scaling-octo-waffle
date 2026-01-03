@@ -20,6 +20,7 @@ export interface RegisterResult {
         id: string;
         email: string;
         emailVerified: boolean;
+        permissions: string[];
     };
 }
 
@@ -35,6 +36,7 @@ export interface LoginResult {
     user: {
         id: string;
         email: string;
+        permissions: string[];
     };
 }
 
@@ -86,6 +88,10 @@ export class AuthenticationService {
             return { user: createdUser, session: createdSession };
         });
 
+        /* Fetch permissions for the new user (they get default 'user' role permissions) */
+        const userWithPermissions = await this.userRepository.findByIdWithPermissions(user.id);
+        const permissions = userWithPermissions?.permissions ?? [];
+
         const sessionToken = `${sessionId}.${sessionSecret}`;
 
         return {
@@ -95,6 +101,7 @@ export class AuthenticationService {
                 id: user.id,
                 email: user.email,
                 emailVerified: user.email_verified !== null,
+                permissions,
             },
         };
     }
@@ -105,6 +112,13 @@ export class AuthenticationService {
             data.email,
             data.password,
         );
+
+        /* Fetch user with permissions to return in login response */
+        const userWithPermissions = await this.userRepository.findByIdWithPermissions(user.id);
+        
+        if (!userWithPermissions) {
+             throw new AuthenticationError("User not found or inactive");
+        }
 
         const isRememberMe = data.rememberMe === true;
         const sessionDuration = isRememberMe ? REMEMBER_ME_DURATION_DAYS : SESSION_DURATION_DAYS;
@@ -137,6 +151,7 @@ export class AuthenticationService {
             user: {
                 id: user.id,
                 email: user.email,
+                permissions: userWithPermissions.permissions,
             },
         };
     }
