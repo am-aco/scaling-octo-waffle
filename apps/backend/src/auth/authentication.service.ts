@@ -14,9 +14,13 @@ export interface RegisterData {
 }
 
 export interface RegisterResult {
-    id: string;
-    email: string;
-    created_at: Date;
+    sessionToken: string;
+    session: Session;
+    user: {
+        id: string;
+        email: string;
+        emailVerified: boolean;
+    };
 }
 
 export interface LoginData {
@@ -57,15 +61,41 @@ export class AuthenticationService {
 
         const passwordHash = await hashPassword(data.password);
 
-        const user = await this.userRepository.create({
-            email: data.email,
-            password_hash: passwordHash,
+        const csrfToken = generateSecureToken();
+        const { id: sessionId, secret: sessionSecret } = generateSessionCredentials();
+        const secretHash = hashToken(sessionSecret);
+
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
+
+        const { user, session } = await withTransaction(async (client) => {
+            const createdUser = await this.userRepository.create({
+                email: data.email,
+                password_hash: passwordHash,
+            }, client);
+
+            const createdSession = await this.sessionRepository.create({
+                id: sessionId,
+                user_id: createdUser.id,
+                expires_at: expiresAt,
+                is_remember_me: false,
+                csrf_token: csrfToken,
+                secret_hash: secretHash,
+            }, client);
+
+            return { user: createdUser, session: createdSession };
         });
 
+        const sessionToken = `${sessionId}.${sessionSecret}`;
+
         return {
-            id: user.id,
-            email: user.email,
-            created_at: user.created_at,
+            sessionToken,
+            session,
+            user: {
+                id: user.id,
+                email: user.email,
+                emailVerified: user.email_verified !== null,
+            },
         };
     }
 

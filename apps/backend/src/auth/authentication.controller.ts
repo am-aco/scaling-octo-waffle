@@ -10,7 +10,7 @@ export class AuthenticationController {
 
     /*
      * Handle POST /auth/register
-     * Creates a new user account
+     * Creates a new user account and auto-logs in
      */
     register = async (req: Request, res: Response): Promise<void> => {
         try {
@@ -26,9 +26,12 @@ export class AuthenticationController {
 
             const result = await this.authenticationService.register({ email, password });
 
+            res.cookie(SESSION_COOKIE_NAME, result.sessionToken, COOKIE_OPTIONS);
+
             res.status(HTTP_STATUS.CREATED).json({
                 message: "User registered successfully",
-                user: result,
+                user: result.user,
+                csrfToken: result.session.csrf_token,
             });
         }
         catch (error) {

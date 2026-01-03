@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Mail, Lock, Eye, EyeOff, Clock } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { ApiClientError } from "@/services/api/client";
 
 interface SignInFormProps {
   onSwitchToSignUp: () => void;
@@ -19,6 +21,7 @@ interface FieldErrors {
 
 export function SignInForm({ onSwitchToSignUp, onSwitchToForgotPassword }: SignInFormProps) {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -50,24 +53,32 @@ export function SignInForm({ onSwitchToSignUp, onSwitchToForgotPassword }: SignI
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
-    
+
     setErrors({ email: emailError, password: passwordError });
     setTouched({ email: true, password: true });
-    
+
     if (emailError || passwordError) {
       return;
     }
 
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success("Sign in successful!");
-    setIsLoading(false);
-    
-    // Navigate to dashboard with user info
-    navigate("/dashboard", { state: { name: email.split("@")[0] } });
+
+    try {
+      await login({ email, password, rememberMe });
+      toast.success("Sign in successful!");
+      navigate("/dashboard");
+    } catch (error) {
+      if (error instanceof ApiClientError) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

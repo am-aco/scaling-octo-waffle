@@ -65,9 +65,11 @@ export class UserRepository {
      * Create a new user in the database
      * Returns the created user with generated ID and timestamps
      * Assigns 'user' role by default
+     * Supports transactions via optional client parameter
      */
-    async create(userData: CreateUserRecord): Promise<User> {
-        const result = await pool.query<User>(
+    async create(userData: CreateUserRecord, client?: PoolClient): Promise<User> {
+        const executor = client ?? pool;
+        const result = await executor.query<User>(
             `INSERT INTO users (email, password_hash, role_id)
                 VALUES ($1, $2, (SELECT id FROM roles WHERE name = 'user'))
             RETURNING *`,

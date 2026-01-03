@@ -1,6 +1,8 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/features/auth";
 import { LogOut, Shield, User, FileText, Eye, Pencil, Trash2, PlusCircle, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 
 const MOCK_PERMISSIONS = [
   { id: "profile:read", label: "profile:read", description: "View own profile", icon: User },
@@ -16,13 +18,20 @@ const MOCK_PERMISSIONS = [
 ];
 
 const Dashboard = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const userName = location.state?.name || "User";
+  const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    navigate("/auth");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Signed out successfully");
+      navigate("/auth");
+    } catch {
+      toast.error("Failed to sign out");
+    }
   };
+
+  const displayName = user?.email?.split("@")[0] || "User";
 
   return (
     <div className="min-h-screen bg-background">
@@ -42,7 +51,7 @@ const Dashboard = () => {
         <div className="max-w-2xl mx-auto space-y-12">
           <div className="space-y-2">
             <h1 className="text-4xl font-bold tracking-tight">
-              Welcome, {userName}!
+              Welcome, {displayName}!
             </h1>
             <p className="text-muted-foreground text-lg">
               Here's an overview of your account permissions.

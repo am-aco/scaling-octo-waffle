@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Mail, ArrowLeft } from "lucide-react";
+import { authApi } from "../api/auth.api";
+import { ApiClientError } from "@/services/api/client";
 
 interface ForgotPasswordFormProps {
   onSwitchToSignIn: () => void;
@@ -17,12 +19,20 @@ export function ForgotPasswordForm({ onSwitchToSignIn }: ForgotPasswordFormProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setIsSubmitted(true);
-    toast.success("Reset link sent!");
-    setIsLoading(false);
+
+    try {
+      await authApi.requestPasswordReset({ email });
+      setIsSubmitted(true);
+      toast.success("Reset link sent!");
+    } catch (error) {
+      if (error instanceof ApiClientError) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isSubmitted) {

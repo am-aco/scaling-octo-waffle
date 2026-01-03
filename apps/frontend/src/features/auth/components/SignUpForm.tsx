@@ -4,21 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Mail, Lock, Eye, EyeOff, User, Clock } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Clock } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { ApiClientError } from "@/services/api/client";
 
 interface SignUpFormProps {
   onSwitchToSignIn: () => void;
 }
 
 interface FieldErrors {
-  name?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
 }
 
 interface TouchedFields {
-  name?: boolean;
   email?: boolean;
   password?: boolean;
   confirmPassword?: boolean;
@@ -26,7 +26,7 @@ interface TouchedFields {
 
 export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
+  const { register } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -35,12 +35,6 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<TouchedFields>({});
-
-  const validateName = (value: string) => {
-    if (!value.trim()) return "Full name is required";
-    if (value.trim().length < 2) return "Name must be at least 2 characters";
-    return undefined;
-  };
 
   const validateEmail = (value: string) => {
     if (!value.trim()) return "Email is required";
@@ -62,11 +56,8 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
 
   const handleBlur = (field: keyof TouchedFields) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
-    
+
     switch (field) {
-      case "name":
-        setErrors((prev) => ({ ...prev, name: validateName(name) }));
-        break;
       case "email":
         setErrors((prev) => ({ ...prev, email: validateEmail(email) }));
         break;
@@ -81,31 +72,37 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const nameError = validateName(name);
+
     const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
     const confirmPasswordError = validateConfirmPassword(confirmPassword, password);
-    
+
     setErrors({
-      name: nameError,
       email: emailError,
       password: passwordError,
       confirmPassword: confirmPasswordError,
     });
-    setTouched({ name: true, email: true, password: true, confirmPassword: true });
-    
-    if (nameError || emailError || passwordError || confirmPasswordError) {
+    setTouched({ email: true, password: true, confirmPassword: true });
+
+    if (emailError || passwordError || confirmPasswordError) {
       return;
     }
 
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success("Account created successfully!");
-    setIsLoading(false);
-    
-    // Navigate to dashboard with user info
-    navigate("/dashboard", { state: { name: name.split(" ")[0] } });
+
+    try {
+      await register({ email, password });
+      toast.success("Account created successfully!");
+      navigate("/dashboard");
+    } catch (error) {
+      if (error instanceof ApiClientError) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -119,30 +116,6 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <div className="relative transition-all focus-within:shadow-sm focus-within:-translate-x-0.5 focus-within:-translate-y-0.5">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="name"
-                type="text"
-                placeholder="John Doe"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  if (touched.name) {
-                    setErrors((prev) => ({ ...prev, name: validateName(e.target.value) }));
-                  }
-                }}
-                onBlur={() => handleBlur("name")}
-                className={`pl-10 h-12 border-2 ${touched.name && errors.name ? "border-destructive" : ""}`}
-              />
-            </div>
-            {touched.name && errors.name && (
-              <p className="text-sm text-destructive">{errors.name}</p>
-            )}
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="signup-email">Email</Label>
             <div className="relative transition-all focus-within:shadow-sm focus-within:-translate-x-0.5 focus-within:-translate-y-0.5">

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite"
 import { MemoryRouter } from "react-router-dom"
 import { Toaster } from "sonner"
 import { SignUpForm } from "./SignUpForm"
+import { AuthProvider } from "../context/AuthContext"
 
 const meta: Meta<typeof SignUpForm> = {
   title: "Auth/SignUpForm",
@@ -13,10 +14,12 @@ const meta: Meta<typeof SignUpForm> = {
   decorators: [
     (Story) => (
       <MemoryRouter>
-        <div className="w-[400px]">
-          <Story />
-        </div>
-        <Toaster />
+        <AuthProvider>
+          <div className="w-[400px]">
+            <Story />
+          </div>
+          <Toaster />
+        </AuthProvider>
       </MemoryRouter>
     ),
   ],

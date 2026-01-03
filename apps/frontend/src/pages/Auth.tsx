@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { AuthLayout } from "@/components/auth/AuthLayout";
-import { SignInForm } from "@/components/auth/SignInForm";
-import { SignUpForm } from "@/components/auth/SignUpForm";
-import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
+import {
+  AuthLayout,
+  SignInForm,
+  SignUpForm,
+  ForgotPasswordForm,
+} from "@/features/auth";
 
 type AuthView = "signin" | "signup" | "forgot-password";
 
