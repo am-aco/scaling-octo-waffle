@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
-import { authApi } from "../api/auth.api";
+import { authApi } from "@/features/auth/api/auth.api";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { handleApiError } from "@/lib/error-utils";
 

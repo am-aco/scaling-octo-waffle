@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { MemoryRouter } from "react-router-dom"
 import { Toaster } from "sonner"
-import { SignInForm } from "./SignInForm"
-import { AuthProvider } from "../context/AuthContext"
+import { AuthProvider } from "@/features/auth/context/AuthContext"
+import { SignInForm } from "@/features/auth/components/SignInForm"
 
 const meta: Meta<typeof SignInForm> = {
   title: "Auth/SignInForm",

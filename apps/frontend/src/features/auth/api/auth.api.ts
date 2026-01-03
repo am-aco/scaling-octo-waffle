@@ -10,7 +10,7 @@ import type {
   MessageResponse,
   TokenValidationPayload,
   TokenValidationResponse,
-} from "../types/auth.types";
+} from "@/features/auth/types/auth.types";
 
 export const authApi = {
   login: (credentials: LoginCredentials): Promise<LoginResponse> => {

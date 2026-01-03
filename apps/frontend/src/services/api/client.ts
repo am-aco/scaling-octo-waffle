@@ -1,4 +1,4 @@
-import { csrfStore } from "./csrf";
+import { csrfStore } from "@/services/api/csrf";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const CSRF_HEADER = "X-CSRF-Token";

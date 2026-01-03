@@ -5,16 +5,15 @@ import {
     useCallback,
     type ReactNode,
 } from "react";
-import { authApi } from "../api/auth.api";
+import { authApi } from "@/features/auth/api/auth.api";
 import { csrfStore } from "@/services/api/csrf";
 import type {
-    AuthContextValue,
-    AuthState,
-    LoginCredentials,
-    RegisterCredentials,
-    User,
-} from "../types/auth.types";
-
+  AuthContextValue,
+  AuthState,
+  LoginCredentials,
+  RegisterCredentials,
+  User,
+} from "@/features/auth/types/auth.types";
 const initialState: AuthState = {
     user: null,
     isAuthenticated: false,

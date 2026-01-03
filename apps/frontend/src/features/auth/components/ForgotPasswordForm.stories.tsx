@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { MemoryRouter } from "react-router-dom"
 import { Toaster } from "sonner"
-import { ForgotPasswordForm } from "./ForgotPasswordForm"
+import { ForgotPasswordForm } from "@/features/auth/components/ForgotPasswordForm"
 
 const meta: Meta<typeof ForgotPasswordForm> = {
   title: "Auth/ForgotPasswordForm",

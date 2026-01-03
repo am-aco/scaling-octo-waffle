@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, ArrowLeft } from "lucide-react";
-import { authApi } from "../api/auth.api";
+import { authApi } from "@/features/auth/api/auth.api";
 import { handleApiError } from "@/lib/error-utils";
 
 interface ForgotPasswordFormProps {
