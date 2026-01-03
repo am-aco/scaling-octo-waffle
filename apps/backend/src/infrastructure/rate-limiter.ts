@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { HTTP_STATUS } from './http.js';
+import { config as appConfig } from './config.js';
 
 interface RateLimitConfig {
     max: number;
@@ -11,6 +12,12 @@ export class RateLimiter {
 
     createMiddleware(config: RateLimitConfig) {
         return (req: Request, res: Response, next: NextFunction): void => {
+            /* Bypass rate limiting in development */
+            if (appConfig.nodeEnv === 'development') {
+                next();
+                return;
+            }
+
             const ip = req.ip || req.socket.remoteAddress || 'unknown';
             const endpoint = req.path;
             const key = `${ip}:${endpoint}`;
