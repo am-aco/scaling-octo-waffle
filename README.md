@@ -952,6 +952,40 @@ res.cookie("sid", sessionToken, cookieOptions);
 -   Log session type for security auditing
 -   Provide users visibility into active sessions with ability to revoke
 
+### Sliding Expiration (Lazy Extension)
+
+Pattern to prevent active sessions from expiring by extending the duration based on user activity.
+
+**Mechanism:**
+1.  Middleware checks `is_remember_me` flag on every request.
+2.  If true, expiration is extended to `NOW + 30 days`.
+3.  Updates both database record and cookie `maxAge`.
+
+**Performance Optimization: Write Throttling (Checkpointing)**
+Standard sliding expiration triggers a database write on every request. To optimize performance, a throttling mechanism only extends the session if a specific percentage (e.g., 50%) of the duration has elapsed.
+
+```typescript
+const halfDurationMs = REMEMBER_ME_DURATION_MS / 2;
+const timeUntilExpiry = expiresAt.getTime() - now.getTime();
+
+/* Only update if closer to expiration than creation */
+if (timeUntilExpiry < halfDurationMs) {
+    const newExpiresAt = new Date();
+    newExpiresAt.setDate(newExpiresAt.getDate() + REMEMBER_ME_DURATION_DAYS);
+    
+    /* Async update to avoid blocking response */
+    sessionRepository.updateExpiration(session.id, newExpiresAt).catch(logError);
+    
+    /* Refresh cookie */
+    res.cookie(SESSION_COOKIE_NAME, token, { ...options, maxAge: REMEMBER_ME_DURATION_MS });
+}
+```
+
+**Characteristics:**
+-   **Resource Efficiency:** Converts write-heavy session management into a read-heavy pattern.
+-   **Database Load:** Reduces `UPDATE` frequency from 1:1 (requests to writes) to 1:N (once per threshold period).
+-   **Trade-off:** Minimal reduction in total inactivity allowance (up to the threshold limit) in exchange for significant scalability gains.
+
 # Appendix
 
 ## References
