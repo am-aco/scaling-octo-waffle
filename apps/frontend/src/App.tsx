@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
-import { AuthProvider, ProtectedRoute } from "@/features/auth";
+import { AuthProvider, ProtectedRoute, GuestRoute } from "@/features/auth";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
@@ -10,8 +10,22 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
+          <Route
+            path="/"
+            element={
+              <GuestRoute>
+                <Index />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/auth"
+            element={
+              <GuestRoute>
+                <Auth />
+              </GuestRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={

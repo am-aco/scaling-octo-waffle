@@ -45,11 +45,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
       const response = await authApi.getProfile();
-      setUser(response.user, state.csrfToken);
+      csrfStore.setToken(response.csrfToken);
+      setUser(response.user, response.csrfToken);
     } catch {
+      csrfStore.clearToken();
       setUser(null);
     }
-  }, [state.csrfToken]);
+  }, []);
 
   const login = async (credentials: LoginCredentials) => {
     const response = await authApi.login(credentials);

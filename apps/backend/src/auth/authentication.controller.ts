@@ -99,6 +99,7 @@ export class AuthenticationController {
     getProfile = async (req: Request, res: Response): Promise<void> => {
         res.status(HTTP_STATUS.OK).json({
             user: req.user,
+            csrfToken: req.session?.csrfToken,
         });
     };
 }

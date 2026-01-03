@@ -31,6 +31,7 @@ export interface RegisterResponse {
 
 export interface ProfileResponse {
   user: User;
+  csrfToken: string;
 }
 
 export interface PasswordResetRequestPayload {

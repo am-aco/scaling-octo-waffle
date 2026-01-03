@@ -5,4 +5,5 @@ export { SignUpForm } from "./components/SignUpForm";
 export { ForgotPasswordForm } from "./components/ForgotPasswordForm";
 export { AuthLayout } from "./components/AuthLayout";
 export { ProtectedRoute } from "./components/ProtectedRoute";
+export { GuestRoute } from "./components/GuestRoute";
 export type * from "./types/auth.types";
