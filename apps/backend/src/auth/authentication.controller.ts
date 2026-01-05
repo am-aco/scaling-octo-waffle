@@ -59,8 +59,8 @@ export class AuthenticationController {
 
             const cookieOptions = {
                 ...COOKIE_OPTIONS,
-                maxAge: result.session.is_remember_me 
-                    ? REMEMBER_ME_DURATION_MS 
+                maxAge: result.session.is_remember_me
+                    ? REMEMBER_ME_DURATION_MS
                     : SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000,
             };
 
