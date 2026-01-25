@@ -1,7 +1,7 @@
 import type { UserRepository, User } from "../users/user.repository.js";
 import { verifyPassword } from "./password.util.js";
-import { withTransaction } from "../infrastructure/database.js";
-import { AuthenticationError, ForbiddenError } from "../infrastructure/errors.js";
+import { withTransaction } from "../infrastructure/database/database.js";
+import { AuthenticationError, ForbiddenError } from "../infrastructure/errors/errors.js";
 import { MAX_LOGIN_ATTEMPTS, LOCKOUT_DURATION_MS } from "./auth.constants.js";
 
 interface VerifiedUser {

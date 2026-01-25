@@ -1,9 +1,9 @@
 import { UserRepository } from "../users/user.repository.js";
 import { RefreshTokenRepository } from "./refresh-token.repository.js";
 import { signAccessToken } from "./jwt.util.js";
-import { config } from "../infrastructure/config.js";
-import { withTransaction } from "../infrastructure/database.js";
-import { AuthenticationError, ForbiddenError, NotFoundError, ValidationError } from "../infrastructure/errors.js";
+import { config } from "../infrastructure/config/config.js";
+import { withTransaction } from "../infrastructure/database/database.js";
+import { AuthenticationError, ForbiddenError, NotFoundError, ValidationError } from "../infrastructure/errors/errors.js";
 import { verifyCredentials } from "./credential-verification.util.js";
 
 export class TokenService {

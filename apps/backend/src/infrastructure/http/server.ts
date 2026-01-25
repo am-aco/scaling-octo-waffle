@@ -3,44 +3,44 @@ import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
 import cookieParser from "cookie-parser";
-import { createAuthenticationRouter } from "../auth/authentication.routes.js";
-import { createAuthMiddleware } from "../auth/authentication.middleware.js";
-import { createJwtAuthMiddleware } from "../auth/jwt-authentication.middleware.js";
-import { createJwtRouter } from "../auth/jwt.routes.js";
-import { createTokenRouter } from "../auth/token.routes.js";
-import { createPasswordResetRouter } from "../auth/password-reset.routes.js";
-import { createEmailVerificationRouter } from "../auth/email-verification.routes.js";
-import { SessionRepository } from "../auth/session.repository.js";
-import { RefreshTokenRepository } from "../auth/refresh-token.repository.js";
-import { PasswordResetTokenRepository } from "../auth/password-reset-token.repository.js";
-import { PasswordResetService } from "../auth/password-reset.service.js";
-import { EmailVerificationTokenRepository } from "../auth/email-verification-token.repository.js";
-import { EmailVerificationService } from "../auth/email-verification.service.js";
-import { AuthenticationService } from "../auth/authentication.service.js";
-import { AuthorizationService } from "../auth/authorization.service.js";
-import { createRequirePermission } from "../auth/authorization.middleware.js";
-import { createRequireOwnership } from "../auth/ownership.middleware.js";
-import { JwtService } from "../auth/jwt.service.js";
-import { TokenService } from "../auth/token.service.js";
-import { UserRepository } from "../users/user.repository.js";
-import { UserService } from "../users/user.service.js";
-import { createUserRouter } from "../users/user.routes.js";
-import { PostRepository } from "../posts/post.repository.js";
-import { PostService } from "../posts/post.service.js";
-import { createPostRouter } from "../posts/post.routes.js";
-import { EmailService } from "./email.service.js";
+import { createAuthenticationRouter } from "../../auth/authentication.routes.js";
+import { createAuthMiddleware } from "../../auth/authentication.middleware.js";
+import { createJwtAuthMiddleware } from "../../auth/jwt-authentication.middleware.js";
+import { createJwtRouter } from "../../auth/jwt.routes.js";
+import { createTokenRouter } from "../../auth/token.routes.js";
+import { createPasswordResetRouter } from "../../auth/password-reset.routes.js";
+import { createEmailVerificationRouter } from "../../auth/email-verification.routes.js";
+import { SessionRepository } from "../../auth/session.repository.js";
+import { RefreshTokenRepository } from "../../auth/refresh-token.repository.js";
+import { PasswordResetTokenRepository } from "../../auth/password-reset-token.repository.js";
+import { PasswordResetService } from "../../auth/password-reset.service.js";
+import { EmailVerificationTokenRepository } from "../../auth/email-verification-token.repository.js";
+import { EmailVerificationService } from "../../auth/email-verification.service.js";
+import { AuthenticationService } from "../../auth/authentication.service.js";
+import { AuthorizationService } from "../../auth/authorization.service.js";
+import { createRequirePermission } from "../../auth/authorization.middleware.js";
+import { createRequireOwnership } from "../../auth/ownership.middleware.js";
+import { JwtService } from "../../auth/jwt.service.js";
+import { TokenService } from "../../auth/token.service.js";
+import { UserRepository } from "../../users/user.repository.js";
+import { UserService } from "../../users/user.service.js";
+import { createUserRouter } from "../../users/user.routes.js";
+import { PostRepository } from "../../posts/post.repository.js";
+import { PostService } from "../../posts/post.service.js";
+import { createPostRouter } from "../../posts/post.routes.js";
+import { EmailService } from "../email/email.service.js";
 import { RateLimiter } from "./rate-limiter.js";
 import { requestIdMiddleware } from "./request-id.middleware.js";
-import { pool } from "./database.js";
+import { pool } from "../database/database.js";
 import { HTTP_STATUS } from "./http.js";
-import { config } from "./config.js";
+import { config } from "../config/config.js";
 import {
     ValidationError,
     ConflictError,
     AuthenticationError,
     NotFoundError,
     ForbiddenError,
-} from "./errors.js";
+} from "../errors/errors.js";
 
 /* Creates and configures the Express application */
 export function createServer(): Express {

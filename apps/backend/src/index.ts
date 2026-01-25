@@ -1,7 +1,7 @@
-import { config } from "./infrastructure/config.js";
-import { pool, testConnection } from "./infrastructure/database.js";
-import { createServer } from "./infrastructure/server.js";
-import { logger } from "./infrastructure/logger.js";
+import { config } from "./infrastructure/config/config.js";
+import { pool, testConnection } from "./infrastructure/database/database.js";
+import { createServer } from "./infrastructure/http/server.js";
+import { logger } from "./infrastructure/logging/logger.js";
 
 /* Test database connection before starting */
 await testConnection();

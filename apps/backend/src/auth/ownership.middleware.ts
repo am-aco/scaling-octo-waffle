@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { HTTP_STATUS } from "../infrastructure/http.js";
+import { HTTP_STATUS } from "../infrastructure/http/http.js";
 import type { AuthorizationService } from "./authorization.service.js";
 
 type OwnerIdResolver = string | ((req: Request) => Promise<string | null>);

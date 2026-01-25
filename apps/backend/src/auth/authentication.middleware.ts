@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import type { Logger } from "winston";
 import { SessionRepository, type SessionUser } from "./session.repository.js";
-import { HTTP_STATUS } from "../infrastructure/http.js";
+import { HTTP_STATUS } from "../infrastructure/http/http.js";
 import { SESSION_COOKIE_NAME, COOKIE_OPTIONS, REMEMBER_ME_DURATION_MS, REMEMBER_ME_DURATION_DAYS } from "./auth.constants.js";
 import { parseSessionToken, hashToken, secureCompare } from "./token.util.js";
 

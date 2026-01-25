@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { AuthenticationService } from "./authentication.service.js";
-import { HTTP_STATUS } from "../infrastructure/http.js";
-import { handleControllerError } from "../infrastructure/error-handler.util.js";
+import { HTTP_STATUS } from "../infrastructure/http/http.js";
+import { handleControllerError } from "../infrastructure/http/error-handler.util.js";
 import { COOKIE_OPTIONS, REMEMBER_ME_DURATION_MS, SESSION_COOKIE_NAME, SESSION_DURATION_DAYS } from "./auth.constants.js";
 import { parseSessionToken } from "./token.util.js";
 

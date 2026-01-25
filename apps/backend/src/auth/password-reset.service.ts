@@ -1,9 +1,9 @@
-import { withTransaction } from '../infrastructure/database.js';
-import type { UserRepository } from '../users/user.repository.js';
-import type { PasswordResetTokenRepository } from './password-reset-token.repository.js';
-import type { SessionRepository } from './session.repository.js';
-import type { EmailService } from '../infrastructure/email.service.js';
-import { ValidationError } from '../infrastructure/errors.js';
+import { withTransaction } from '../infrastructure/database/database.js';
+import { UserRepository } from '../users/user.repository.js';
+import { PasswordResetTokenRepository } from './password-reset-token.repository.js';
+import { SessionRepository } from './session.repository.js';
+import type { EmailService } from '../infrastructure/email/email.service.js';
+import { ValidationError } from '../infrastructure/errors/errors.js';
 import { hashPassword } from './password.util.js';
 import { generateSecureToken, hashToken } from './token.util.js';
 

@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { JwtService } from "./jwt.service.js";
-import { HTTP_STATUS } from "../infrastructure/http.js";
-import { handleControllerError } from "../infrastructure/error-handler.util.js";
+import { HTTP_STATUS } from "../infrastructure/http/http.js";
+import { handleControllerError } from "../infrastructure/http/error-handler.util.js";
 
 export class JwtController {
     constructor(private jwtService: JwtService) {}

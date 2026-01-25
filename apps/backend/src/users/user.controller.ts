@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { HTTP_STATUS } from "../infrastructure/http.js";
+import { HTTP_STATUS } from "../infrastructure/http/http.js";
 import type { UserService } from "./user.service.js";
-import { handleControllerError } from "../infrastructure/error-handler.util.js";
+import { handleControllerError } from "../infrastructure/http/error-handler.util.js";
 
 export class UserController {
     constructor(private userService: UserService) {}

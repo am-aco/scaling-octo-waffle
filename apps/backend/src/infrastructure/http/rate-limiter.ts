@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { HTTP_STATUS } from './http.js';
-import { config as appConfig } from './config.js';
+import { config as appConfig } from '../config/config.js';
 
 interface RateLimitConfig {
     max: number;

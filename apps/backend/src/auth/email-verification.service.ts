@@ -1,8 +1,8 @@
-import { withTransaction } from '../infrastructure/database.js';
-import type { UserRepository } from '../users/user.repository.js';
-import type { EmailVerificationTokenRepository } from './email-verification-token.repository.js';
-import type { EmailService } from '../infrastructure/email.service.js';
-import { ValidationError } from '../infrastructure/errors.js';
+import { withTransaction } from '../infrastructure/database/database.js';
+import { UserRepository } from '../users/user.repository.js';
+import { EmailVerificationTokenRepository } from './email-verification-token.repository.js';
+import type { EmailService } from '../infrastructure/email/email.service.js';
+import { ValidationError } from '../infrastructure/errors/errors.js';
 import { generateSecureToken, hashToken } from './token.util.js';
 
 const TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000; /* 24 hours */

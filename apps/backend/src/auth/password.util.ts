@@ -1,5 +1,5 @@
 import argon2 from "argon2";
-import { logger } from "../infrastructure/logger.js";
+import { logger } from "../infrastructure/logging/logger.js";
 
 const ARGON2_OPTIONS = {
     type: argon2.argon2id,

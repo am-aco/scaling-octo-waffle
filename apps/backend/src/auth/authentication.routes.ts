@@ -2,7 +2,7 @@ import { Router, type RequestHandler } from "express";
 import { AuthenticationController } from "./authentication.controller.js";
 import type { AuthenticationService } from "./authentication.service.js";
 import { requireAuth } from "./authentication.middleware.js";
-import { validateCsrf } from "../infrastructure/csrf.js";
+import { validateCsrf } from "../infrastructure/http/csrf.js";
 
 interface AuthenticationRouterDependencies {
     authenticationService: AuthenticationService;

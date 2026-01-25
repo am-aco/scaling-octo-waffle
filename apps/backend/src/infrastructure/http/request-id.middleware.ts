@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import type { Request, Response, NextFunction } from "express";
-import { logger } from "./logger.js";
+import { logger } from "../logging/logger.js";
 
 export function requestIdMiddleware(req: Request, res: Response, next: NextFunction): void {
     const requestId = (req.headers["x-request-id"] as string) || crypto.randomUUID();

@@ -1,6 +1,6 @@
 import jwt, { type SignOptions } from "jsonwebtoken";
-import { config } from "../infrastructure/config.js";
-import { AuthenticationError } from "../infrastructure/errors.js";
+import { config } from "../infrastructure/config/config.js";
+import { AuthenticationError } from "../infrastructure/errors/errors.js";
 
 type ExpiresIn = Exclude<SignOptions["expiresIn"], undefined>;
 

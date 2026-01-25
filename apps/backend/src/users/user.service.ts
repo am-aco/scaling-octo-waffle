@@ -1,6 +1,6 @@
 import type { UserRepository, User } from "./user.repository.js";
 import { hashPassword } from "../auth/password.util.js";
-import { ValidationError, ConflictError } from "../infrastructure/errors.js";
+import { ValidationError, ConflictError } from "../infrastructure/errors/errors.js";
 import { isValidEmail, isValidPassword } from "../auth/validation.util.js";
 
 export interface CreateUserData {

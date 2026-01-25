@@ -1,7 +1,7 @@
 import { UserRepository } from "../users/user.repository.js";
 import { signToken } from "./jwt.util.js";
 import { verifyCredentials } from "./credential-verification.util.js";
-import { withTransaction } from "../infrastructure/database.js";
+import { withTransaction } from "../infrastructure/database/database.js";
 
 export class JwtService {
     constructor(private userRepository: UserRepository) {}

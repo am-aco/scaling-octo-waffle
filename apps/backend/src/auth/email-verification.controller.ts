@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { EmailVerificationService } from "./email-verification.service.js";
-import { HTTP_STATUS } from "../infrastructure/http.js";
-import { handleControllerError } from "../infrastructure/error-handler.util.js";
+import { HTTP_STATUS } from "../infrastructure/http/http.js";
+import { handleControllerError } from "../infrastructure/http/error-handler.util.js";
 import { isValidEmail } from "./validation.util.js";
 
 export class EmailVerificationController {

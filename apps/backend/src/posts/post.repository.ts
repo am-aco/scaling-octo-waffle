@@ -1,4 +1,4 @@
-import { pool } from "../infrastructure/database.js";
+import { pool } from "../infrastructure/database/database.js";
 
 export interface Post {
     id: string;

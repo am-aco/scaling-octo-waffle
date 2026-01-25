@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { PasswordResetService } from "./password-reset.service.js";
-import { HTTP_STATUS } from "../infrastructure/http.js";
-import { handleControllerError } from "../infrastructure/error-handler.util.js";
+import { HTTP_STATUS } from "../infrastructure/http/http.js";
+import { handleControllerError } from "../infrastructure/http/error-handler.util.js";
 import { isValidEmail, isValidPassword } from "./validation.util.js";
 
 export class PasswordResetController {

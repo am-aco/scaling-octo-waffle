@@ -1,4 +1,4 @@
-import { config } from "../infrastructure/config.js";
+import { config } from "../infrastructure/config/config.js";
 
 export const SESSION_COOKIE_NAME = "sid";
 

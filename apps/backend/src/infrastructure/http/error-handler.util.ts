@@ -6,7 +6,7 @@ import {
     AuthenticationError,
     NotFoundError,
     ForbiddenError,
-} from "./errors.js";
+} from "../errors/errors.js";
 
 export function handleControllerError(error: unknown, req: Request, res: Response, context: string): void {
     if (error instanceof ValidationError) {

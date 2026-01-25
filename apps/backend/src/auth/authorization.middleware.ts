@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { HTTP_STATUS } from "../infrastructure/http.js";
+import { HTTP_STATUS } from "../infrastructure/http/http.js";
 import type { AuthorizationService } from "./authorization.service.js";
 
 export function createRequirePermission(authzService: AuthorizationService) {
