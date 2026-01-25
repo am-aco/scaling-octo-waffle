@@ -2,7 +2,7 @@ import { UserRepository } from "../users/user.repository.js";
 import { SessionRepository, type Session } from "./session.repository.js";
 import { hashPassword } from "./password.util.js";
 import { isValidEmail, isValidPassword } from "./validation.util.js";
-import { ValidationError, ConflictError } from "../infrastructure/errors.js";
+import { ValidationError, ConflictError, AuthenticationError } from "../infrastructure/errors.js";
 import { withTransaction } from "../infrastructure/database.js";
 import { SESSION_DURATION_DAYS, REMEMBER_ME_DURATION_DAYS } from "./auth.constants.js";
 import { verifyCredentials } from "./credential-verification.util.js";

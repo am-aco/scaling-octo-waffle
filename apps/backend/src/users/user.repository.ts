@@ -213,6 +213,7 @@ export class UserRepository {
      * Find user by ID with permissions
      * Used for JWT authentication to load user + permissions
      * Returns null if user doesn't exist or is inactive
+     * Loads both role-based AND user-specific permissions
      */
     async findByIdWithPermissions(userId: string): Promise<{
         id: string;
@@ -237,16 +238,17 @@ export class UserRepository {
         }
 
         const permissionsQuery = `
-            SELECT permissions.name
+            SELECT DISTINCT permissions.name
             FROM permissions
-            INNER JOIN role_permissions ON permissions.id = role_permissions.permission_id
-            WHERE role_permissions.role_id = $1
+            LEFT JOIN role_permissions ON permissions.id = role_permissions.permission_id AND role_permissions.role_id = $1
+            LEFT JOIN user_permissions ON permissions.id = user_permissions.permission_id AND user_permissions.user_id = $2
+            WHERE role_permissions.role_id IS NOT NULL OR user_permissions.user_id IS NOT NULL
             ORDER BY permissions.name
         `;
 
         const permissionsResult = await pool.query<{ name: string }>(
             permissionsQuery,
-            [user.role_id]
+            [user.role_id, user.id]
         );
 
         return {
